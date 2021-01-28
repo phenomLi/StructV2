@@ -1,0 +1,14 @@
+{
+  "dependencies": {
+    "awesome-typescript-loader": "^5.2.1",
+    "typescript": "^3.2.2",
+    "webpack": "^4.28.2",
+    "zrender": "^5.0.3"
+  },
+  "devDependencies": {
+    "webpack-cli": "^3.2.3"
+  },
+  "scripts": {
+    "build": "tsc && webpack"
+  }
+}
