@@ -37,15 +37,19 @@ export class Engine {
     constructor(DOMContainer: HTMLElement, engineName: string) {
         this.engineName = engineName;
         this.DOMContainer = DOMContainer;
-        this.elementScheduler = new ElementScheduler(this);
+        this.shapeScheduler = new ShapeScheduler(this);
+        this.elementScheduler = new ElementScheduler(this, this.shapeScheduler);
         this.linkScheduler = new LinkScheduler();
         this.pointerScheduler = new PointerScheduler();
-        this.shapeScheduler = new ShapeScheduler(this);
 
         this.containerWidth = this.DOMContainer.offsetWidth;
         this.containerHeight = this.DOMContainer.offsetHeight;
     }
 
+    /**
+     * 
+     * @param sourceData 
+     */
     public render(sourceData: Sources) {
   
         if(sourceData === undefined || sourceData === null) {
@@ -58,9 +62,7 @@ export class Engine {
         this.sources = sourceData;
         this.stringifySources = stringifySources;
 
-        this.elementScheduler.constructElements(sourceData);
-        this.linkScheduler.constructLinks([]);
-        this.pointerScheduler.constructPointers([]);
+        this.constructModel(sourceData);
         this.layoutFunction(this.elementScheduler.getElementContainer(), this.containerWidth, this.containerHeight);
     }
 
@@ -80,7 +82,13 @@ export class Engine {
         this.elementScheduler.setElementMap(elementLabel, elementConstructor, zrShapeConstructors, shapeOptions);
     }
 
-
+    /**
+     * 应用一个Link模型
+     * @param linkLabel 
+     * @param linkConstructor 
+     * @param zrShapeConstructors 
+     * @param shapeOptions 
+     */
     public applyLink(
         linkLabel: string, linkConstructor: { new(): Link }, 
         zrShapeConstructors: ZrShapeConstructor[] | ZrShapeConstructor,
@@ -89,6 +97,13 @@ export class Engine {
         this.linkScheduler.setLinkMap(linkLabel, linkConstructor, zrShapeConstructors, shapeOptions);
     }
 
+    /**
+     * 应用一个Pointer模型
+     * @param pointerLabel 
+     * @param pointerConstructor 
+     * @param zrShapeConstructors 
+     * @param shapeOptions 
+     */
     public applyPointer( 
         pointerLabel: string, pointerConstructor: { new(): Pointer }, 
         zrShapeConstructors: ZrShapeConstructor[] | ZrShapeConstructor,
@@ -103,6 +118,20 @@ export class Engine {
      */
     public applyLayout(layoutFunction: LayoutFunction) {
         this.layoutFunction = layoutFunction;
+    }
+
+    /**
+     * 构建模型
+     * @param sourceData 
+     */
+    private constructModel(sourceData: Sources) {
+        this.elementScheduler.constructElements(sourceData);
+        this.linkScheduler.constructLinks([]);
+        this.pointerScheduler.constructPointers([]);
+    }
+
+    private updateShapes() {
+
     }
 
     /**

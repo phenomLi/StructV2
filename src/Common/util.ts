@@ -37,6 +37,14 @@ export const Util = {
     },
 
     /**
+     * 拷贝对象
+     * @param object 
+     */
+    clone(object) {
+        return zrender.util.clone(object);
+    },
+
+    /**
      * 从列表中移除元素
      * @param list 移除列表
      * @param fn 移除判断规则

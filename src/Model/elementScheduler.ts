@@ -1,7 +1,7 @@
 import { Engine } from "../engine";
 import { SourceElement, Sources } from "../sources";
 import { Shape, ShapeStatus } from "../View/shape";
-import { ZrShapeConstructor } from "../View/shapeScheduler";
+import { ShapeScheduler, ZrShapeConstructor } from "../View/shapeScheduler";
 import { Element } from "./element";
 
 
@@ -12,6 +12,8 @@ export type ElementConstructor = { new(elementLabel: string, sourceElement: Sour
 
 export class ElementScheduler {
     private engine: Engine;
+
+    private shapeScheduler: ShapeScheduler;
     // 元素队列
     private elementList: Element[] = [];
     // 元素容器，即源数据经element包装后的结构
@@ -25,8 +27,9 @@ export class ElementScheduler {
         } 
     };
 
-    constructor(engine: Engine) {
+    constructor(engine: Engine, shapeScheduler: ShapeScheduler) {
         this.engine = engine;
+        this.shapeScheduler = shapeScheduler;
     }
 
     /**
@@ -103,24 +106,31 @@ export class ElementScheduler {
         element.applyShapeOptions(shapeOptions);
 
         if(Array.isArray(zrShapeConstructors)) {
-            shapes = zrShapeConstructors.map((item, index) => new Shape(`${elementId}(${index})`, item, element));
+            shapes = zrShapeConstructors.map(function(item, index) {
+                return this.shapeScheduler.createShape(`${elementId}(${index})`, item, element)
+            });
+
+            this.shapeScheduler.packShapes(shapes);
         }
         else {
-            shapes = new Shape(`elementId`, zrShapeConstructors, element);
+            shapes = this.shapeScheduler.createShape(`elementId`, zrShapeConstructors, element);
         }
 
-        element.defineShape(shapes, element.elementStatus);
+        element.shapes = shapes;
+        element.renderShape(shapes, element.elementStatus);
 
         return element;
     }
 
-
+    /**
+     * 更新element对应的图形
+     */
     public updateShapes() {
         for(let i = 0; i < this.elementList.length; i++) {
             let ele = this.elementList[i];
 
             if(ele.isDirty) {
-                ele.renderShape();
+                ele.renderShape(ele.zrShapes, ele.elementStatus);
             }
         }
     }
@@ -150,6 +160,6 @@ export class ElementScheduler {
      */
     public reset() {
         this.elementList.length = 0;
-        this.elementContainer = {};
+        this.elementContainer = { };
     }
 };

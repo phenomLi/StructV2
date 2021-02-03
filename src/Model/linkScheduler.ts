@@ -1,19 +1,15 @@
 import { ShapeStatus } from "../View/shape";
 import { ZrShapeConstructor } from "../View/shapeScheduler";
-import { Element, Style } from "./element";
+import { Element } from "./element";
 import { Link } from "./link";
 
-
-
-export interface LinkOptions {
-    style: Style;
-};
 
 
 
 export class LinkScheduler {
     private links: Link[] = [];
     private prevLinks: Link[] = [];
+
     private linkMap: { 
         [key: string]: {
             linkConstructor: { new(): Link },
@@ -30,11 +26,18 @@ export class LinkScheduler {
      * 构建链接模型
      * @param elementList 
      */
-    constructLinks(elementList: Element[]) {
+    public constructLinks(elementList: Element[]) {
 
     }
 
-    setLinkMap(
+    /**
+     * 
+     * @param linkLabel 
+     * @param linkConstructor 
+     * @param zrShapeConstructors 
+     * @param shapeOptions 
+     */
+    public setLinkMap(
         linkLabel: string, 
         linkConstructor: { new(): Link }, 
         zrShapeConstructors: ZrShapeConstructor[] | ZrShapeConstructor,
@@ -47,7 +50,20 @@ export class LinkScheduler {
         };
     }
 
-    reset() {
+    /**
+     * 更新element对应的图形
+     */
+    public updateShapes() {
+        for(let i = 0; i < this.links.length; i++) {
+            let link = this.links[i];
+
+            if(link.isDirty) {
+                link.renderShape(link.shapes, link.linkStatus);
+            }
+        }
+    }
+
+    public reset() {
         this.links.length = 0;
     }
 }

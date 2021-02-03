@@ -1,5 +1,6 @@
+import { Shape } from "../View/shape";
 import { zrShape } from "../View/shapeScheduler";
-import { Style } from "./element";
+import { ElementStatus, Style } from "./element";
 
 
 export interface LabelStyle extends Style {
@@ -19,7 +20,7 @@ export class Pointer {
     // 指针 id
     id: string;
     // 指针图形实例
-    zrShapes: zrShape[];
+    shape: Shape;
     // 指针类型名称
     pointerLabel: string;
     // 被该指针合并的其他指针
@@ -30,9 +31,9 @@ export class Pointer {
     // 指针标签内容
     text: string;
     //  指针标签图形实例
-    textZrShapes: Text[];
+    textZrShapes: Shape[];
     // 逗号图形实例
-    commaShapes: Text[];
+    commaShapes: Shape[];
     // 目标 element
     target: Element;
 
@@ -50,4 +51,12 @@ export class Pointer {
     setDirty(isDirty: boolean) {
         this.isDirty = isDirty;
     }
+
+    /**
+     * 定义该element映射的图形
+     * @param shapes 
+     * @param elementStatus
+     * @override
+     */
+    renderShape(shapes: Shape[] | Shape, elementStatus: ElementStatus) { }
 };

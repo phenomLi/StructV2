@@ -6,6 +6,7 @@ import { Element } from "../Model/element";
 
 
 export type zrShape = any;
+export type Group = any;
 export type ZrShapeConstructor = { new(): zrShape };
 
 
@@ -14,6 +15,7 @@ export class ShapeScheduler {
     private shapeList: Shape[] = [];
     private shapeTable: { [key: string]: Shape[] } = {};
 
+    private parentGroupList: Group[] = [];
     private appendList: Shape[] = [];
     private removeList: Shape[] = [];
 
@@ -27,7 +29,7 @@ export class ShapeScheduler {
      * @param zrShapeConstructors 
      * @param element 
      */
-    createShape(id: string, zrShapeConstructors: ZrShapeConstructor, element: Element): Shape {
+    public createShape(id: string, zrShapeConstructors: ZrShapeConstructor, element: Element): Shape {
         let shapeType = Util.getClassName(zrShapeConstructors),
             shape = this.getReuseShape(id, shapeType);
 
@@ -39,10 +41,27 @@ export class ShapeScheduler {
     }
 
     /**
+     * 
+     * @param shapes 
+     */
+    public packShapes(shapes: Shape[]){
+        let group: Group = new zrender.Group(),
+            shape: Shape;
+
+        for(let i = 0; i < shapes.length; i++) {
+            shape = shapes[i];
+            group.add(shape.zrShape);
+            shape.parentGroup = group;
+        }
+
+        this.parentGroupList.push(group);
+    }
+
+    /**
      * 添加一个图形
      * @param shape 
      */
-    private appendShape(shape: Shape) {
+    public appendShape(shape: Shape) {
         let shapeType = shape.type;
 
         if(this.shapeTable[shapeType] === undefined) {
@@ -58,7 +77,7 @@ export class ShapeScheduler {
      * 移除一个图形
      * @param shape 
      */
-    private removeShape(shape: Shape) {
+    public removeShape(shape: Shape) {
         let shapeType = shape.type;
 
         Util.removeFromList(this.shapeTable[shapeType], item => item.id === shape.id); 
@@ -69,6 +88,15 @@ export class ShapeScheduler {
 
         Util.removeFromList(this.shapeList, item => item.id === shape.id); 
         this.removeList.push(shape);
+    }
+
+    /**
+     * 发起一个动画请求
+     * @param shape 
+     * @param animationType 
+     */
+    public emitAnimation(shape: Shape, animationType: string) {
+        
     }
 
     /**

@@ -1,6 +1,6 @@
 import { Util } from "../Common/util";
 import { Element, Style } from "../Model/element";
-import { zrShape, ZrShapeConstructor } from "./shapeScheduler";
+import { Group, zrShape, ZrShapeConstructor } from "./shapeScheduler";
 
 
 export interface ShapeStatus {
@@ -11,6 +11,7 @@ export interface ShapeStatus {
     width: number;
     height: number;
     content: string;
+    points: [number, number][];
     style: Style;
 };
 
@@ -22,7 +23,8 @@ export class Shape {
     zrConstructor: ZrShapeConstructor = null;
     zrShape: zrShape = null;
     targetElement: Element = null;
-    
+    parentGroup: Group = null;
+
     shapeStatus: ShapeStatus = {
         x: 0, y: 0,
         rotation: 0,
@@ -30,6 +32,7 @@ export class Shape {
         height: 0,
         zIndex: 1,
         content: '',
+        points: [],
         style: {
             fill: '#000',
             text: '',
@@ -43,12 +46,17 @@ export class Shape {
         }
     };
 
+    prevShapeStatus: ShapeStatus = null;
+    isDirty: boolean = false;
+    isReconcilerVisited: boolean = false;
+
     constructor(id: string, zrConstructor: ZrShapeConstructor, element: Element) {
         this.id = id;
         this.type = Util.getClassName(zrConstructor);
         this.targetElement = element;
         this.zrConstructor = zrConstructor;
         this.zrShape = new zrConstructor();
+        this.prevShapeStatus = Util.clone(this.shapeStatus);
     }
 
     /**

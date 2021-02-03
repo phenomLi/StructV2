@@ -44,16 +44,16 @@ export interface ElementStatus {
 
 
 export class Element {
-    id: any;
+    id: number;
     elementId: string = null;
     elementLabel: string = null;
 
     elementStatus: ElementStatus = null;
-    zrShape: zrShape[] = [];
+    shapes: Shape[] | Shape = null;
     relativeLinks: Link[] = [];
     relativePointers: Pointer[] = [];
 
-    isDirty: boolean=  false;
+    isDirty: boolean = false;
 
     // 给sourceElement的部分    
     [key: string]: any;
