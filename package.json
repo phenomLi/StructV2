@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@antv/g6": "^4.2.1",
     "awesome-typescript-loader": "^5.2.1",
     "typescript": "^3.2.2",
     "webpack": "^4.28.2",

@@ -1,12 +1,14 @@
-import * as zrender from "zrender";
-
-
+import { Engine } from "../engine";
+import { ConstructedData } from "../Model/modelConstructor";
+import { SV } from "../StructV";
+import { G6Data, Renderer } from "../View/renderer";
 
 
 /**
  * 工具函数
  */
 export const Util = {
+
 
     /**
      * 生成唯一id
@@ -19,29 +21,11 @@ export const Util = {
     },
 
     /**
-     * 扩展对象
-     * @param origin 原对象 
-     * @param ext 扩展的对象
+     * 乞丐版对象克隆
+     * @param obj 
      */
-    extends(origin, ext) {
-        zrender.util.extend(origin, ext);
-    },
-
-    /**
-     * 合并对象
-     * @param origin 
-     * @param dest 
-     */
-    merge(origin, dest) {
-        zrender.util.merge(origin, dest, true);
-    },
-
-    /**
-     * 拷贝对象
-     * @param object 
-     */
-    clone(object) {
-        return zrender.util.clone(object);
+    objectClone<T extends Object>(obj: T): T {
+        return obj? JSON.parse(JSON.stringify(obj)): { };
     },
 
     /**
@@ -56,26 +40,6 @@ export const Util = {
     },
 
     /**
-     * 从一个由数组组成的路径中获取几何中心
-     * @param path 
-     */
-    getPathCenter(path: Array<[number, number]>): [number, number] {
-        let maxX = -Infinity,
-            minX = Infinity,
-            maxY = -Infinity,
-            minY = Infinity;
-
-        path.map(item => {
-            if(item[0] > maxX) maxX = item[0];
-            if(item[0] < minX) minX = item[0];
-            if(item[1] > maxY) maxY = item[1];
-            if(item[1] < minY) minY = item[1];
-        });
-
-        return [(maxX + minX) / 2, (maxY + minY) / 2];
-    },
-
-    /**
      * 断言函数
      * @param assertFn 
      * @param errorText 
@@ -84,14 +48,6 @@ export const Util = {
         if(condition) {
             throw errorText;
         }
-    },
-
-    /**
-     * 获取类的名称
-     * @param classConstructor 
-     */
-    getClassName(classConstructor): string {
-        return classConstructor.prototype.constructor.toString().split(' ')[1];
     },
 
     /**
@@ -119,6 +75,41 @@ export const Util = {
         if(value <= max && value >= min) return value;
         if(value > max) return max;
         if(value < min) return min;
+    },
+
+    /**
+     * 
+     * @param constructedDataType 
+     * @returns 
+     */
+    converterList(constructedDataType: ConstructedData[keyof ConstructedData]) {
+        return [].concat(...Object.keys(constructedDataType).map(item => constructedDataType[item]));
+    },
+
+    /**
+     * G6 data 转换器
+     * @param constructedData 
+     * @returns 
+     */
+    convertG6Data(constructedData: ConstructedData): G6Data {
+        let nodes = [...Util.converterList(constructedData.element), ...Util.converterList(constructedData.pointer)],
+            edges = Util.converterList(constructedData.link);
+
+        return { 
+            nodes: nodes.map(item => item.props), 
+            edges: edges.map(item => item.props)
+        };
+    },
+
+    /**
+     * 计算旋转矩阵
+     * @param matrix 
+     * @param rotation 
+     */
+    calcRotateMatrix(matrix: number[], rotation: number): number[] {
+        const Mat3 = SV.G6.Util.mat3;
+        Mat3.rotate(matrix, matrix, rotation);
+        return matrix;
     }
 };
 

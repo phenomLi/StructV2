@@ -1,57 +1,57 @@
-import { Element } from "./Model/element";
+import { Element } from "./Model/modelData";
 import { Sources } from "./sources";
-import { Pointer } from "./Model/pointer";
-import { ShapeStatus } from "./View/shape";
-import { ShapeScheduler, ZrShapeConstructor } from "./View/shapeScheduler";
-import { ElementConstructor, ElementContainer, ElementScheduler } from "./Model/elementScheduler";
-import { Link } from "./Model/link";
-import { LinkScheduler } from "./Model/linkScheduler";
-import { PointerScheduler } from "./Model/pointerScheduler";
-
-
-export type LayoutFunction = (elements: ElementContainer | Element[], containerWidth: number, containerHeight: number) => void;
+import { ConstructedData, ModelConstructor } from "./Model/modelConstructor";
+import { Renderer } from "./View/renderer";
+import { AnimationOptions, ElementOption, LayoutOptions, LinkOption, Options, PointerOption } from "./options";
+import { Layouter } from "./View/layouter";
 
 
 export class Engine { 
-    // 引擎id
-    private id: string;
-    // 引擎名称
-    private engineName: string;
-    // HTML容器
-    private DOMContainer: HTMLElement;
-    // 当前保存的源数据
-    private sources: Sources = null;
-    // 序列化的源数据
-    private stringifySources: string = null;
+    private stringifySources: string = null; // 序列化的源数据
 
-    private elementScheduler: ElementScheduler = null;
-    private linkScheduler: LinkScheduler = null;
-    private pointerScheduler: PointerScheduler = null;
-    private shapeScheduler: ShapeScheduler = null;
-
+    private modelConstructor: ModelConstructor = null;
+    private layouter: Layouter = null;
+    private renderer: Renderer = null;
     private containerWidth: number;
     private containerHeight: number;
     
-    private layoutFunction: LayoutFunction;
+    public elementOptions: { [key: string]: ElementOption } = {  };
+    public linkOptions: { [key: string]: LinkOption } = {  };
+    public pointerOptions: { [key: string]: PointerOption } = {  };
+    public layoutOptions: LayoutOptions = null;
+    public animationOptions: AnimationOptions = null;
 
-    constructor(DOMContainer: HTMLElement, engineName: string) {
-        this.engineName = engineName;
-        this.DOMContainer = DOMContainer;
-        this.shapeScheduler = new ShapeScheduler(this);
-        this.elementScheduler = new ElementScheduler(this, this.shapeScheduler);
-        this.linkScheduler = new LinkScheduler();
-        this.pointerScheduler = new PointerScheduler();
+    constructor(DOMContainer: HTMLElement) {
+        const options: Options = this.defineOptions();
 
-        this.containerWidth = this.DOMContainer.offsetWidth;
-        this.containerHeight = this.DOMContainer.offsetHeight;
+        this.elementOptions = options.element;
+        this.linkOptions = options.link || { };
+        this.pointerOptions = options.pointer || { };
+
+        this.layoutOptions = Object.assign({
+            fitCenter: true,
+            fitView: false
+        }, options.layout);
+
+        this.animationOptions = Object.assign({
+            enable: true,
+            duration: 750,
+            timingFunction: 'linearEasing'
+        }, options.animation);
+
+        this.containerWidth = DOMContainer.offsetWidth,
+        this.containerHeight = DOMContainer.offsetHeight;
+
+        this.modelConstructor = new ModelConstructor(this);
+        this.layouter = new Layouter(this, this.containerWidth, this.containerHeight);
+        this.renderer = new Renderer(this, DOMContainer, this.containerWidth, this.containerHeight);
     }
 
     /**
-     * 
+     * 输入数据进行渲染
      * @param sourceData 
      */
     public render(sourceData: Sources) {
-  
         if(sourceData === undefined || sourceData === null) {
             return;
         }
@@ -59,88 +59,48 @@ export class Engine {
         // 若前后数据没有发生变化，什么也不干（将json字符串化后比较）
         let stringifySources = JSON.stringify(sourceData);
         if(stringifySources === this.stringifySources) return;
-        this.sources = sourceData;
         this.stringifySources = stringifySources;
 
-        this.constructModel(sourceData);
-        this.layoutFunction(this.elementScheduler.getElementContainer(), this.containerWidth, this.containerHeight);
+        const constructedData: ConstructedData = this.modelConstructor.construct(sourceData);
+
+        this.renderer.build(constructedData);
+
+        this.layouter.layout(constructedData, this.layout);
+
+        this.renderer.render(constructedData);
     }
 
     /**
-     * 
-     * @param elementLabel 
-     * @param element 
-     * @param zrShapeConstructors 
-     * @param shapeOptions 
+     * 定义配置项
+     * @returns 
      */
-    public applyElement(
-        elementLabel: string, 
-        elementConstructor: ElementConstructor, 
-        zrShapeConstructors: ZrShapeConstructor[] | ZrShapeConstructor,
-        shapeOptions: Partial<ShapeStatus>
-    ) {
-        this.elementScheduler.setElementMap(elementLabel, elementConstructor, zrShapeConstructors, shapeOptions);
-    }
-
-    /**
-     * 应用一个Link模型
-     * @param linkLabel 
-     * @param linkConstructor 
-     * @param zrShapeConstructors 
-     * @param shapeOptions 
-     */
-    public applyLink(
-        linkLabel: string, linkConstructor: { new(): Link }, 
-        zrShapeConstructors: ZrShapeConstructor[] | ZrShapeConstructor,
-        shapeOptions: Partial<ShapeStatus>
-    ) {
-        this.linkScheduler.setLinkMap(linkLabel, linkConstructor, zrShapeConstructors, shapeOptions);
-    }
-
-    /**
-     * 应用一个Pointer模型
-     * @param pointerLabel 
-     * @param pointerConstructor 
-     * @param zrShapeConstructors 
-     * @param shapeOptions 
-     */
-    public applyPointer( 
-        pointerLabel: string, pointerConstructor: { new(): Pointer }, 
-        zrShapeConstructors: ZrShapeConstructor[] | ZrShapeConstructor,
-        shapeOptions: Partial<ShapeStatus>
-    ) {
-        this.pointerScheduler.setPointerMap(pointerLabel, pointerConstructor, zrShapeConstructors, shapeOptions);
+    public defineOptions(): Options {
+        return null;
     }
 
     /**
      * 设置布局函数
-     * @param layoutFunction 
+     * @overwrite
      */
-    public applyLayout(layoutFunction: LayoutFunction) {
-        this.layoutFunction = layoutFunction;
+    public layout(elementContainer: { [ket: string]: Element[] }, layoutOptions: LayoutOptions) { }
+
+    /**
+     * 获取容器尺寸
+     * @returns 
+     */
+    public getContainerSize(): { width: number, height: number } {
+        return { 
+            width: this.containerWidth, 
+            height: this.containerHeight 
+        };
     }
 
     /**
-     * 构建模型
-     * @param sourceData 
+     * 绑定 G6 事件
+     * @param eventName 
+     * @param callback 
      */
-    private constructModel(sourceData: Sources) {
-        this.elementScheduler.constructElements(sourceData);
-        this.linkScheduler.constructLinks([]);
-        this.pointerScheduler.constructPointers([]);
-    }
-
-    private updateShapes() {
-
-    }
-
-    /**
-     * 重置引擎数据
-     */
-    private resetData() {
-        this.elementScheduler.reset();
-        this.linkScheduler.reset();
-        this.pointerScheduler.reset();
-        this.shapeScheduler.reset();
+     public on(eventName: string, callback: Function) {
+        this.renderer.on(eventName, callback);
     }
 };

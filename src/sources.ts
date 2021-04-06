@@ -1,26 +1,20 @@
 
 // 连接目标信息
-export type LinkTarget = {
-    element: string;
-    target: number | string;
-    [key: string]: any;
-} | number | string;
+export type LinkTarget = number | string;
 
 // 结点连接声明
-export type LinkData = LinkTarget | LinkTarget[];
+export type sourceLinkData = LinkTarget | LinkTarget[];
 
 // 结点指针声明
-export type PointerData = string | string[];
+export type sourcePointerData = string | string[];
 
 // 源数据单元
 export interface SourceElement {
     id: string | number;
-    [key: string]: any | LinkData | PointerData;
+    [key: string]: any | sourceLinkData | sourcePointerData;
 }
 
 // 源数据格式
 export type Sources = { } | SourceElement[];
-
-
 
 

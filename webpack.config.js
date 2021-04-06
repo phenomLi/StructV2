@@ -17,12 +17,9 @@ module.exports = {
 			{
 				test: /\.ts$/,
 				exclude: /node_modules/, 
-				loader: 'awesome-typescript-loader',
-				options: {
-					configFileName: './atlconfig.json'
-				}
+				loader: 'awesome-typescript-loader'
 			}
 		]
 	},
-	//devtool: 'eval-source-map'
+	devtool: 'eval-source-map'
 };
