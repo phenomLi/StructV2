@@ -14,7 +14,8 @@ export default G6.registerNode('binary-tree-node', {
                 y: height / 2,
                 width: width,
                 height: height,
-                stroke: '#333',
+                stroke: cfg.style.stroke,
+                cursor: cfg.style.cursor,
                 fill: 'transparent'
             },
             name: 'wrapper'
@@ -26,7 +27,9 @@ export default G6.registerNode('binary-tree-node', {
                 y: height / 2,
                 width: width / 2,
                 height: height,
-                fill: cfg.style.fill
+                fill: cfg.style.fill,
+                stroke: cfg.style.stroke,
+                cursor: cfg.style.cursor
             },
             name: 'mid',
             draggable: true
@@ -42,7 +45,8 @@ export default G6.registerNode('binary-tree-node', {
                     textBaseline: 'middle',
                     text: cfg.label,
                     fill: style.fill || '#000',
-                    fontSize: style.fontSize || 16
+                    fontSize: style.fontSize || 16,
+                    cursor: cfg.style.cursor
                 },
                 name: 'text',
                 draggable: true

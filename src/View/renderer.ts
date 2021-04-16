@@ -4,6 +4,7 @@ import { ConstructedData } from '../Model/modelConstructor';
 import { Util } from '../Common/util';
 import { Animations } from './animation';
 import { SV } from '../StructV';
+import { Model } from './../Model/modelData';
 
 
 
@@ -21,12 +22,14 @@ export class Renderer {
     private isFirstRender: boolean;
     private prevRenderData: G6Data;
     private graphInstance;
-    private helpGraphInstance;
+    private shadowGraphInstance;
+    private modelList: Model[];
 
-    constructor(engine: Engine, DOMContainer: HTMLElement, containerWidth: number, containerHeight: number) {
+    constructor(engine: Engine, DOMContainer: HTMLElement) {
         this.engine = engine;
         this.DOMContainer = DOMContainer;
         this.isFirstRender = true;
+        this.modelList = [];
         this.prevRenderData = {
             nodes: [],
             edges: []
@@ -34,12 +37,33 @@ export class Renderer {
 
         const enable: boolean = this.engine.animationOptions.enable === undefined? true: this.engine.animationOptions.enable,
               duration: number = this.engine.animationOptions.duration,
-              timingFunction: string = this.engine.animationOptions.timingFunction;
+              timingFunction: string = this.engine.animationOptions.timingFunction,
+              interactionOptions = this.engine.interactionOptions;
+
+        const modeMap = {
+            drag: 'drag-canvas',
+            zoom: 'zoom-canvas',
+            dragNode: {
+                type: 'drag-node',
+                shouldBegin: n => {
+                    // 不允许拖拽外部指针
+                    if (n.item && n.item.getModel().modelType === 'pointer') return false;
+                    return true;
+                }
+            }
+        },
+        defaultModes = [];
+
+        Object.keys(interactionOptions).forEach(item => {
+            if(interactionOptions[item] === true && modeMap[item] !== undefined) {
+                defaultModes.push(modeMap[item]);
+            }
+        });
 
         this.graphInstance = new SV.G6.Graph({
             container: DOMContainer,
-            width: containerWidth, 
-            height: containerHeight,
+            width: DOMContainer.offsetWidth, 
+            height: DOMContainer.offsetHeight,
             animate: enable,
             animateCfg: {
                 duration: duration,
@@ -47,40 +71,15 @@ export class Renderer {
             },
             fitView: this.engine.layoutOptions.fitView,
             modes: {
-                default: ['drag-canvas', 'zoom-canvas', 'drag-node']
+                default: defaultModes
             }
         });
 
-        this.helpGraphInstance = new SV.G6.Graph({
+        this.shadowGraphInstance = new SV.G6.Graph({
             container: DOMContainer.cloneNode()
         });
 
         this.animations = new Animations(duration, timingFunction);
-        this.initBehavior();
-    }
-
-    /**
-     * 初始化交互
-     */
-    private initBehavior() {
-        this.graphInstance.on('node:drag', (() => {
-            let pointer = null;
-
-            return ev => {
-                if(pointer === null) {
-                    pointer = this.graphInstance.findById(ev.item.getModel().externalPointerId);
-                }
-
-                if(pointer) {
-                    pointer.updatePosition({
-                        x: ev.canvasX,
-                        y: ev.canvasY
-                    });
-                }
-
-                console.log(ev);
-            }
-        })());
     }
 
     /**
@@ -147,21 +146,21 @@ export class Renderer {
         let elementList: Element[] = Util.converterList(constructedData.element),
             linkList: Link[] = Util.converterList(constructedData.link),
             pointerList: Pointer[] = Util.converterList(constructedData.pointer),
-            nodeList = [...elementList.map(item => item.props), ...pointerList.map(item => item.props)],
-            edgeList = linkList.map(item => item.props),
-            list = [...elementList, ...linkList, ...pointerList];
+            nodeList = [...elementList.map(item => item.cloneProps()), ...pointerList.map(item => item.cloneProps())],
+            edgeList = linkList.map(item => item.cloneProps());
+
+        this.modelList = [...elementList, ...linkList, ...pointerList];
 
         const data: G6Data = {
             nodes: <G6NodeModel[]>nodeList,
             edges: <G6EdgeModel[]>edgeList
         };
 
-        this.helpGraphInstance.clear();
-        this.helpGraphInstance.read(data);
+        this.shadowGraphInstance.clear();
+        this.shadowGraphInstance.read(data);
 
-        list.forEach(item => {
-            item.G6Item = this.helpGraphInstance.findById(item.id);
-            item.afterInitG6Item();
+        this.modelList.forEach(item => {
+            item.shadowG6Item = this.shadowGraphInstance.findById(item.id);
         });
     }
 
@@ -194,20 +193,28 @@ export class Renderer {
 
         this.handleAppendItems(appendData);
         this.handleRemoveItems(removeData);
-        
+
         if(this.engine.layoutOptions.fitView) {
             this.graphInstance.fitView();
         }
+
+        this.modelList.forEach(item => {
+            item.renderG6Item = this.graphInstance.findById(item.id);
+            item.G6Item = item.renderG6Item;
+        });
     }
 
     /**
-     * 绑定 G6 事件
-     * @param eventName 
-     * @param callback 
+     * 获取 model 队列
      */
-    public on(eventName: string, callback: Function) {
-        if(this.graphInstance) {
-            this.graphInstance.on(eventName, callback)
-        }
+    getModelList(): Model[] {
+        return this.modelList;
+    }
+
+    /**
+     * 获取 G6 实例
+     */
+    public getGraphInstance() {
+        return this.graphInstance;
     }
 }

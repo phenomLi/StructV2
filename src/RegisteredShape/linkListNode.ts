@@ -14,50 +14,49 @@ export default G6.registerNode('link-list-node', {
                 y: height / 2,
                 width: width,
                 height: height,
-                stroke: '#ddd'
+                stroke: cfg.style.stroke,
+                fill: 'transparent'
             },
             name: 'wrapper'
         });
 
         group.addShape('rect', {
             attrs: {
-                x: width / 3,
+                x: width / 2,
                 y: height / 2,
                 width: width * (2 / 3),
                 height: height,
-                fill: cfg.style.fill
+                fill: cfg.style.fill,
+                stroke: cfg.style.stroke
             },
-            name: 'main-rect'
+            name: 'main-rect',
+            draggable: true
         });
 
         if (cfg.label) {
             const style = (cfg.labelCfg && cfg.labelCfg.style) || {};
             group.addShape('text', {
                 attrs: {
-                    x: cfg.size[0] + 2, // 居中
-                    y: -cfg.size[1],
+                    x: width * (5 / 6), 
+                    y: height,
                     textAlign: 'center',
                     textBaseline: 'middle',
                     text: cfg.label,
                     fill: style.fill || '#000',
                     fontSize: style.fontSize || 16
                 },
-                name: 'pointer-text-shape',
-                draggable: false,
+                name: 'text',
+                draggable: true
             });
         }
 
         return wrapperRect;
     },
 
-    update(cfg, item) {
-        console.log(88);
-    },
-
     getAnchorPoints() {
         return [
             [0, 0.5],
-            [2 / 3, 0.5]
+            [5 / 6, 0.5]
         ];
     }
 });

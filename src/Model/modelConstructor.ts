@@ -14,9 +14,11 @@ export interface ConstructedData {
 
 export class ModelConstructor {
     private engine: Engine;
+    private constructedData: ConstructedData;
 
     constructor(engine: Engine) {
         this.engine = engine;
+        this.constructedData = null;
     }
 
     /**
@@ -28,11 +30,13 @@ export class ModelConstructor {
             linkContainer = this.constructLinks(this.engine.linkOptions, elementContainer),
             pointerContainer = this.constructPointers(this.engine.pointerOptions, elementContainer);
 
-        return { 
+        this.constructedData = { 
             element: elementContainer,
             link: linkContainer,
             pointer: pointerContainer
         };
+        
+        return this.constructedData;
     }
 
     /**
@@ -88,12 +92,14 @@ export class ModelConstructor {
         linkNames.forEach(name => {
             for(let i = 0; i < elementList.length; i++) {
                 let element: Element = elementList[i],
-                    sourceLinkData: sourceLinkData = element[name],
-                    options: LinkOption = linkOptions[name],
+                    sourceLinkData: sourceLinkData = element.sourceElement[name],
                     targetElement: Element | Element[] = null,
                     link: Link = null;
 
-                if(sourceLinkData === undefined || sourceLinkData === null) continue;
+                if(sourceLinkData === undefined || sourceLinkData === null) {
+                    element[name] = null;
+                    continue;
+                }
 
                 //  ------------------- 将连接声明字段 sourceLinkData 从 id 变为 Element -------------------
                 if(Array.isArray(sourceLinkData)) {
@@ -101,9 +107,8 @@ export class ModelConstructor {
                         targetElement = this.fetchTargetElements(elementContainer, element, item);
 
                         if(targetElement) {
-                            link = new Link(name, element, targetElement, index);
+                            link = this.createLink(name, element, targetElement, index);
                             linkContainer[name].push(link);
-                            link.initProps(options);
                         }
 
                         return targetElement;
@@ -111,11 +116,10 @@ export class ModelConstructor {
                 }
                 else {
                     targetElement = this.fetchTargetElements(elementContainer, element, sourceLinkData);
-                    
+
                     if(targetElement) {
-                        link = new Link(name, element, targetElement, null);
+                        link = this.createLink(name, element, targetElement, null);
                         linkContainer[name].push(link);
-                        link.initProps(options);
                     }
 
                     element[name] = targetElement;
@@ -145,7 +149,7 @@ export class ModelConstructor {
         });
 
         pointerNames.forEach(name => {
-            let options = pointerOptions[name];
+            
 
             for(let i = 0; i < elementList.length; i++) {
                 let element = elementList[i],
@@ -155,9 +159,8 @@ export class ModelConstructor {
                 if(!pointerData) continue;
 
                 let id = name + '#' + (Array.isArray(pointerData)? pointerData.join('-'): pointerData),
-                    pointer = new Pointer(id, name, pointerData, element);
+                    pointer = this.createPointer(id, name, pointerData, element);
 
-                pointer.initProps(options);
                 pointerContainer[name].push(pointer);
             }
         });
@@ -172,13 +175,50 @@ export class ModelConstructor {
      */
     private createElement(sourceElement: SourceElement, elementName: string): Element {
         let elementOption = this.engine.elementOptions[elementName],
-            element = new Element(elementName, sourceElement),
+            element: Element = undefined,
             label = elementOption.label? this.parserElementContent(sourceElement, elementOption.label): '';
 
+        element = new Element(elementName, sourceElement);
         element.initProps(elementOption);
         element.set('label', label);
+        element.sourceElement = sourceElement;
 
         return element;
+    }
+
+    /**
+     * 外部指针工厂，创建Pointer
+     * @param id 
+     * @param pointerName 
+     * @param label 
+     * @param target 
+     */
+    private createPointer(id: string, pointerName: string, pointerData: string | string[], target: Element): Pointer {
+        let options = this.engine.pointerOptions[pointerName],
+            pointer = undefined;
+
+        pointer = new Pointer(id, pointerName, pointerData, target);
+        pointer.initProps(options);
+
+        return pointer;
+    };
+
+    /**
+     * 连线工厂，创建Link
+     * @param linkName 
+     * @param element 
+     * @param target 
+     * @param index 
+     */
+    private createLink(linkName: string, element: Element, target: Element, index: number): Link {
+        let options: LinkOption = this.engine.linkOptions[linkName],
+            link = undefined,
+            id = `${element.id}-${target.id}`;
+        
+        link = new Link(id, linkName, element, target, index);
+        link.initProps(options);
+
+        return link;
     }
 
     /**

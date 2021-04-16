@@ -1,9 +1,8 @@
-const Engine = SV.Engine,
-      Group = SV.Group,
-      Bound = SV.Bound,
-      G6 = SV.G6;
 
 
+/**
+ * 二叉树
+ */
 class BinaryTree extends Engine {
     defineOptions() {
         return {
@@ -13,7 +12,9 @@ class BinaryTree extends Engine {
                     size: [60, 30],
                     label: '[id]',
                     style: {
-                        fill: '#b83b5e'
+                        fill: '#b83b5e',
+                        stroke: "#333",
+                        cursor: 'pointer'
                     }
                 }
             },
@@ -24,6 +25,8 @@ class BinaryTree extends Engine {
                     targetAnchor: 0,
                     style: {
                         stroke: '#333',
+                        lineAppendWidth: 6,
+                        cursor: 'pointer',
                         endArrow: {
                             path: G6.Arrow.triangle(8, 6, 0), 
                             fill: '#333'

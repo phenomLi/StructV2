@@ -96,8 +96,8 @@ export const Util = {
             edges = Util.converterList(constructedData.link);
 
         return { 
-            nodes: nodes.map(item => item.props), 
-            edges: edges.map(item => item.props)
+            nodes: nodes.map(item => item.cloneProps()), 
+            edges: edges.map(item => item.cloneProps())
         };
     },
 

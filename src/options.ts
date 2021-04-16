@@ -71,12 +71,21 @@ export interface AnimationOptions {
 };
 
 
+export interface InteractionOptions {
+    drag: boolean;
+    zoom: boolean;
+    dragNode: boolean;
+    selectNode: boolean;
+};
+
+
 export interface Options {
     element: { [key: string]: ElementOption };
     link?: { [key: string]: LinkOption }
     pointer?: { [key: string]: PointerOption };
     layout?: LayoutOptions;
     animation?: AnimationOptions;
+    interaction?: InteractionOptions;
 };
 
 

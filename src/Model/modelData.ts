@@ -16,6 +16,7 @@ export interface G6NodeModel {
     style: Style;
     labelCfg: ElementLabelOption;
     externalPointerId: string; 
+    modelType: string;
 };
 
 
@@ -32,25 +33,50 @@ export interface G6EdgeModel {
 };
 
 
-class Model {
+export class Model {
     id: string;
     name: string;
+    type: string;
 
     props: G6NodeModel | G6EdgeModel;
+    shadowG6Item;
+    renderG6Item;
     G6Item;
 
     constructor(id: string, name: string) { 
         this.id = id;
         this.name = name;
+        this.shadowG6Item = null;
+        this.renderG6Item = null;
         this.G6Item = null;
-        this.props = null;
+        this.props = <G6NodeModel | G6EdgeModel>{ };
+    }
+
+    /**
+     * @override
+     * 定义 G6 model 的属性
+     * @param option 
+     */
+    protected defineProps(option: ElementOption | LinkOption | PointerOption): G6NodeModel | G6EdgeModel {
+        return null;
     }
 
     /**
      * 初始化 G6 model 的属性
      * @param option 
      */
-    initProps(option: ElementOption | LinkOption | PointerOption) { }
+    initProps(option: ElementOption | LinkOption | PointerOption) { 
+        this.props = this.defineProps(option);
+    }
+
+    /**
+     * 克隆 G6 model 的属性
+     * @returns 
+     */
+    cloneProps(): G6NodeModel | G6EdgeModel {
+        return Util.objectClone(this.props);
+        // return this.props;
+    }
 
     /**
      * 获取 G6 model 的属性
@@ -66,7 +92,14 @@ class Model {
      * @param value 
      * @returns 
      */
-    set(attr: string, value: any) {
+    set(attr: string | object, value?: any) {
+        if(typeof attr === 'object') {
+            Object.keys(attr).map(item => {
+                this.set(item, attr[item]);
+            });
+            return;
+        }
+
         if(this.props[attr] === undefined) {
             return;
         }
@@ -111,17 +144,13 @@ class Model {
         if(this.G6Item === null) return null;
         return this.G6Item.getContainer().getMatrix();
     }
-
-    /**
-     * 钩子函数：在获取 G6Item 后执行
-     */
-    afterInitG6Item() {
-        this.set('rotation', this.get('rotation'));
-    }
 }
 
 
 export class Element extends Model {
+    type = 'element';
+    sourceElement: SourceElement;
+
     constructor(type: string, sourceElement: SourceElement) {
         super(sourceElement.id.toString(), type);
 
@@ -132,12 +161,8 @@ export class Element extends Model {
         });
     }
 
-    /**
-     * 初始化 G6 model 的属性
-     * @param option 
-     */
-    initProps(option: ElementOption) {
-        this.props = {
+    protected defineProps(option: ElementOption) {
+        return {
             id: this.id,
             x: 0,
             y: 0,
@@ -148,7 +173,8 @@ export class Element extends Model {
             label: null,
             style: Util.objectClone<Style>(option.style),
             labelCfg: Util.objectClone<ElementLabelOption>(option.labelOptions),
-            externalPointerId: null
+            externalPointerId: null,
+            modelType: this.type
         };
     }
 };
@@ -156,22 +182,20 @@ export class Element extends Model {
 
 
 export class Link extends Model { 
+    type = 'link';
     element: Element;
     target: Element;
     index: number;
 
-    constructor(type: string, element: Element, target: Element, index: number) { 
-        super(`${element.id}-${target.id}`, type);
+    constructor(id: string, type: string, element: Element, target: Element, index: number) { 
+        super(id, type);
         this.element = element;
         this.target = target;
         this.index = index;
     }
 
-    /**
-     * 初始化 G6 model 的属性
-     * @param option 
-     */
-    initProps(option: LinkOption) {
+
+    protected defineProps(option: LinkOption) {
         let sourceAnchor = option.sourceAnchor, 
             targetAnchor = option.targetAnchor;
 
@@ -183,7 +207,7 @@ export class Link extends Model {
             targetAnchor = option.targetAnchor(this.index);
         }
 
-        this.props = {
+        return {
             id: this.id,
             type: option.type,
             source: this.element.id,
@@ -198,7 +222,9 @@ export class Link extends Model {
 };
 
 
+
 export class Pointer extends Model {
+    type = 'pointer';
     target: Element;
     label: string | string[];
 
@@ -207,15 +233,12 @@ export class Pointer extends Model {
         this.target = target;
         this.label = label;
 
-        this.target.set('externalPointerId', id);
+        this.target.set('externalPointerId', 
+        id);
     }
 
-    /**
-     * 初始化 G6 model 的属性
-     * @param option 
-     */
-     initProps(option: ElementOption) {
-        this.props = {
+    protected defineProps(option: ElementOption) {
+        return {
             id: this.id,
             x: 0,
             y: 0,
@@ -226,7 +249,8 @@ export class Pointer extends Model {
             label: typeof this.label === 'string'? this.label: this.label.join(', '),
             style: Util.objectClone<Style>(option.style),
             labelCfg: Util.objectClone<ElementLabelOption>(option.labelOptions),
-            externalPointerId: null
+            externalPointerId: null,
+            modelType: this.type
         };
     }
 };

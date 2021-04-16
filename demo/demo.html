@@ -24,13 +24,47 @@
 <body>
 <div class="container" id="container"></div>
 <button id="btn">change</button>
+<button id="btn-next">reLayout</button>
+<button id="btn-set">set</button>
 <span id="pos"></span>
 
 
 <script src="./../dist/sv.js"></script>
-<script src="./dataStruct/BinaryTree.js"></script>
-<script src="./demo.js"></script>
 <script>
+
+const Engine = SV.Engine,
+      Group = SV.Group,
+      Bound = SV.Bound,
+      G6 = SV.G6;
+
+</script>
+<script src="./dataStruct/BinaryTree.js"></script>
+<script src="./dataStruct/linkList.js"></script>
+<script src="./dataStruct/Array.js"></script>
+<script>
+
+const engines = [BTree, LList, A];
+
+let cur = engines[2](document.getElementById('container'));
+
+cur.engine.render(cur.data[0]);
+
+document.getElementById('btn').addEventListener('click', e => {
+    cur.engine.render(cur.data[1]);
+});
+
+document.getElementById('btn-next').addEventListener('click', e => {
+    cur.engine.reLayout();
+});
+
+document.getElementById('btn-set').addEventListener('click', e => {
+    let els = cur.engine.getElements();
+
+    els.map(item => {
+        item.set('style', { fill: 'red' });
+    });
+});
+
 
 const container = document.getElementById('container'), 
       pos = document.getElementById('pos');
