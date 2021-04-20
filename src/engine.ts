@@ -102,7 +102,7 @@ export class Engine {
 
         this.layouter.layout(this.constructedData, modelList, this.layout);
         modelList.forEach(item => {
-            if(item.type === 'link') return;
+            if(item.modelType === 'link') return;
 
             let model = item.G6Item.getModel(),
                 x = item.get('x'),

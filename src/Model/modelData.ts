@@ -17,6 +17,7 @@ export interface G6NodeModel {
     labelCfg: ElementLabelOption;
     externalPointerId: string; 
     modelType: string;
+    modelName: string;
 };
 
 
@@ -35,8 +36,8 @@ export interface G6EdgeModel {
 
 export class Model {
     id: string;
-    name: string;
-    type: string;
+    modelName: string;
+    modelType: string;
 
     props: G6NodeModel | G6EdgeModel;
     shadowG6Item;
@@ -45,7 +46,7 @@ export class Model {
 
     constructor(id: string, name: string) { 
         this.id = id;
-        this.name = name;
+        this.modelName = name;
         this.shadowG6Item = null;
         this.renderG6Item = null;
         this.G6Item = null;
@@ -148,17 +149,20 @@ export class Model {
 
 
 export class Element extends Model {
-    type = 'element';
+    modelType = 'element';
     sourceElement: SourceElement;
+    sourceId: string;
 
-    constructor(type: string, sourceElement: SourceElement) {
-        super(sourceElement.id.toString(), type);
+    constructor(id: string, type: string, sourceElement: SourceElement) {
+        super(id, type);
 
         Object.keys(sourceElement).map(prop => {
             if(prop !== 'id') {
                 this[prop] = sourceElement[prop];
             }
         });
+
+        this.sourceId = this.id.split('.')[1];
     }
 
     protected defineProps(option: ElementOption) {
@@ -174,7 +178,8 @@ export class Element extends Model {
             style: Util.objectClone<Style>(option.style),
             labelCfg: Util.objectClone<ElementLabelOption>(option.labelOptions),
             externalPointerId: null,
-            modelType: this.type
+            modelType: this.modelType,
+            modelName: this.modelName
         };
     }
 };
@@ -182,7 +187,7 @@ export class Element extends Model {
 
 
 export class Link extends Model { 
-    type = 'link';
+    modelType = 'link';
     element: Element;
     target: Element;
     index: number;
@@ -216,7 +221,9 @@ export class Link extends Model {
             targetAnchor,
             label: option.label,
             style: Util.objectClone<Style>(option.style),
-            labelCfg: Util.objectClone<LinkLabelOption>(option.labelOptions)
+            labelCfg: Util.objectClone<LinkLabelOption>(option.labelOptions),
+            modelType: this.modelType,
+            modelName: this.modelName
         };
     }
 };
@@ -224,7 +231,7 @@ export class Link extends Model {
 
 
 export class Pointer extends Model {
-    type = 'pointer';
+    modelType = 'pointer';
     target: Element;
     label: string | string[];
 
@@ -250,7 +257,8 @@ export class Pointer extends Model {
             style: Util.objectClone<Style>(option.style),
             labelCfg: Util.objectClone<ElementLabelOption>(option.labelOptions),
             externalPointerId: null,
-            modelType: this.type
+            modelType: this.modelType,
+            modelName: this.modelName
         };
     }
 };

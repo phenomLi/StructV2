@@ -1,4 +1,3 @@
-import { Util } from "../Common/util";
 import { Engine } from "../engine";
 import { ConstructedData } from "../Model/modelConstructor";
 import { Element, Model, Pointer } from "../Model/modelData";
@@ -71,7 +70,7 @@ export class Layouter {
         modelList.forEach(item => {
             item.G6Item = item.shadowG6Item;
 
-            if(item.type === 'element' || item.type === 'pointer') {
+            if(item.modelType === 'element' || item.modelType === 'pointer') {
                 item.set('rotation', item.get('rotation'));
                 item.set({ x: 0, y: 0 });
             }

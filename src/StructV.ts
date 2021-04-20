@@ -5,6 +5,7 @@ import externalPointer from "./RegisteredShape/externalPointer";
 import * as G6 from "./Lib/g6.js";
 import linkListNode from "./RegisteredShape/linkListNode";
 import binaryTreeNode from "./RegisteredShape/binaryTreeNode";
+import twoCellNode from "./RegisteredShape/twoCellNode";
 
 
 export const SV = {
@@ -13,7 +14,7 @@ export const SV = {
     Bound: Bound,
     G6,
     registeredShape: [
-        externalPointer, linkListNode, binaryTreeNode
+        externalPointer, linkListNode, binaryTreeNode, twoCellNode
     ]
 };
 

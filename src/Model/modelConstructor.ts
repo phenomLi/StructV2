@@ -158,7 +158,7 @@ export class ModelConstructor {
                 // 若没有指针字段的结点则跳过
                 if(!pointerData) continue;
 
-                let id = name + '#' + (Array.isArray(pointerData)? pointerData.join('-'): pointerData),
+                let id = name + '.' + (Array.isArray(pointerData)? pointerData.join('-'): pointerData),
                     pointer = this.createPointer(id, name, pointerData, element);
 
                 pointerContainer[name].push(pointer);
@@ -176,9 +176,14 @@ export class ModelConstructor {
     private createElement(sourceElement: SourceElement, elementName: string): Element {
         let elementOption = this.engine.elementOptions[elementName],
             element: Element = undefined,
-            label = elementOption.label? this.parserElementContent(sourceElement, elementOption.label): '';
+            label = elementOption.label? this.parserElementContent(sourceElement, elementOption.label): '',
+            id =  elementName + '.' + sourceElement.id.toString();
 
-        element = new Element(elementName, sourceElement);
+        if(label === null || label === undefined) {
+            label = '';
+        }
+
+        element = new Element(id, elementName, sourceElement);
         element.initProps(elementOption);
         element.set('label', label);
         element.sourceElement = sourceElement;
@@ -251,7 +256,7 @@ export class ModelConstructor {
         element: Element, 
         linkTarget: LinkTarget
     ): Element {
-        let elementName = element.name,
+        let elementName = element.modelName,
             elementList: Element[], 
             targetId = linkTarget,
             targetElement = null;
@@ -277,7 +282,7 @@ export class ModelConstructor {
             return null;
         }
         
-        targetElement = elementList.find(item => item.id === targetId);
+        targetElement = elementList.find(item => item.sourceId === targetId);
         return targetElement || null;
     }
 };

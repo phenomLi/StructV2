@@ -74,8 +74,8 @@ export interface AnimationOptions {
 export interface InteractionOptions {
     drag: boolean;
     zoom: boolean;
-    dragNode: boolean;
-    selectNode: boolean;
+    dragNode: boolean | string[];
+    selectNode: boolean | string[];
 };
 
 

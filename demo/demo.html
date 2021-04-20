@@ -39,13 +39,16 @@ const Engine = SV.Engine,
 
 </script>
 <script src="./dataStruct/BinaryTree.js"></script>
-<script src="./dataStruct/linkList.js"></script>
+<script src="./dataStruct/LinkList.js"></script>
 <script src="./dataStruct/Array.js"></script>
+<script src="./dataStruct/ChainHashTable.js"></script>
+<script src="./dataStruct/Stack.js"></script>
+<script src="./dataStruct/LinkStack.js"></script>
 <script>
 
-const engines = [BTree, LList, A];
+const engines = [BTree, LList, A, CHT, St, LStack];
 
-let cur = engines[2](document.getElementById('container'));
+let cur = engines[5](document.getElementById('container'));
 
 cur.engine.render(cur.data[0]);
 

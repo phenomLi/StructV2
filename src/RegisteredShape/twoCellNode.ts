@@ -1,7 +1,8 @@
 import * as G6 from "./../Lib/g6.js";
 
 
-export default G6.registerNode('link-list-node', {
+
+export default G6.registerNode('two-cell-node', {
     draw(cfg, group) {
         cfg.size = cfg.size || [30, 10];
 
@@ -24,12 +25,12 @@ export default G6.registerNode('link-list-node', {
             attrs: {
                 x: width / 2,
                 y: height / 2,
-                width: width * (2 / 3),
+                width: width / 2,
                 height: height,
                 fill: cfg.style.fill,
                 stroke: cfg.style.stroke
             },
-            name: 'main-rect',
+            name: 'left-rect',
             draggable: true
         });
 
@@ -37,7 +38,7 @@ export default G6.registerNode('link-list-node', {
             const style = (cfg.labelCfg && cfg.labelCfg.style) || {};
             group.addShape('text', {
                 attrs: {
-                    x: width * (5 / 6), 
+                    x: width * (3 / 4), 
                     y: height,
                     textAlign: 'center',
                     textBaseline: 'middle',
@@ -56,9 +57,7 @@ export default G6.registerNode('link-list-node', {
     getAnchorPoints() {
         return [
             [0, 0.5],
-            [5 / 6, 0.5],
-            [5 / 6, 0],
-            [5 / 6, 1]
+            [3 / 4, 0.5]
         ];
     }
 });

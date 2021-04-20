@@ -4,17 +4,17 @@
 
 
 /**
- * 单链表
+ * 连地址哈希表
  */
- class HashLinkList extends Engine {
+ class ChainHashTable extends Engine {
 
     defineOptions() {
         return {
             element: { 
-                headNode: {
-                    type: 'link-list-node',
+                head: {
+                    type: 'two-cell-node',
                     label: '[id]',
-                    size: [60, 30],
+                    size: [70, 40],
                     style: {
                         stroke: '#333',
                         fill: '#b83b5e'
@@ -31,7 +31,23 @@
                 }
             },
             link: {
-                next: { 
+                start: { 
+                    type: 'line',
+                    sourceAnchor: 1,
+                    targetAnchor: 0,
+                    style: {
+                        stroke: '#333',
+                        endArrow: {
+                            path: G6.Arrow.triangle(8, 6, 0), 
+                            fill: '#333'
+                        },
+                        startArrow: {
+                            path: G6.Arrow.circle(2, -1), 
+                            fill: '#333'
+                        }
+                    }
+                },
+                next: {
                     type: 'line',
                     sourceAnchor: 1,
                     targetAnchor: 0,
@@ -50,7 +66,7 @@
             },
             pointer: {
                 external: {
-                    offset: 14,
+                    offset: 8,
                     style: {
                         fill: '#f08a5d'
                     }
@@ -59,6 +75,9 @@
             layout: {
                 xInterval: 50,
                 yInterval: 50
+            },
+            interaction: {
+                dragNode: ['node']
             }
         };
     }
@@ -88,53 +107,55 @@
 
 
     layout(elements, layoutOptions) {
-        let nodes = elements.default,
-            rootNodes = [],
-            node,
-            i;
+        let headNode = elements.head;
 
-        for(i = 0; i < nodes.length; i++) {
-            node = nodes[i];
-            
-            if(node.root) {
-                rootNodes.push(node);
+        for(let i = 0; i < headNode.length; i++) {
+            let node = headNode[i],
+                height = node.get('size')[1];
+
+            node.set('y', node.get('y') + i * height);
+
+            if(node.start) {
+                let y = node.get('y') + height - node.start.get('size')[1],
+                    x = layoutOptions.xInterval * 2.5;
+
+                node.start.set({ x, y });
+                this.layoutItem(node.start, null, layoutOptions);
             }
         }
-
-        for(i = 0; i < rootNodes.length; i++) {
-            let root = rootNodes[i],
-                height = root.get('size')[1];
-
-            root.set('y', root.get('y') + i * (layoutOptions.yInterval + height));
-            this.layoutItem(root, null, layoutOptions);
-        }
     }
+
 }
 
 
-const LList = function(container) {
+const CHT = function(container) {
     return{
-        engine: new LinkList(container),
-        data: [[
-            { id: 1, root: true, next: 2, external: ['gg'] },
-            { id: 2, next: 3 },
-            { id: 3, next: 4 },
-            { id: 4, next: 5 },
-            { id: 5 },
-            { id: 6, root: true, next: 7 },
-            { id: 7, next: 8 }, 
-            { id: 8, next: 4 }, 
-            { id: 9, root: true, next: 10 },
-            { id: 10 }
-        ],
-        [
-            { id: 1, root: true, next: 2, external: ['gg'] },
-            { id: 2, next: 3 },
-            { id: 3, next: 6 },
-            { id: 6, next: 7 },
-            { id: 7, next: 8 }, 
-            { id: 8 }
-        ]]
+        engine: new ChainHashTable(container),
+        data: [
+            {
+                head: [{
+                    id: 0,
+                    start: 'node#0'
+                }, {
+                    id: 2,
+                    start: 'node#2'
+                }],
+                node: [{
+                    id: 0,
+                    next: 1
+                }, {
+                    id: 1
+                },{
+                    id: 2,
+                    next: 3
+                }, {
+                    id: 3
+                }]
+            },
+            {
+
+            }
+        ]
     } 
 };
 

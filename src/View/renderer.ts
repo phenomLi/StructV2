@@ -37,28 +37,7 @@ export class Renderer {
 
         const enable: boolean = this.engine.animationOptions.enable === undefined? true: this.engine.animationOptions.enable,
               duration: number = this.engine.animationOptions.duration,
-              timingFunction: string = this.engine.animationOptions.timingFunction,
-              interactionOptions = this.engine.interactionOptions;
-
-        const modeMap = {
-            drag: 'drag-canvas',
-            zoom: 'zoom-canvas',
-            dragNode: {
-                type: 'drag-node',
-                shouldBegin: n => {
-                    // 不允许拖拽外部指针
-                    if (n.item && n.item.getModel().modelType === 'pointer') return false;
-                    return true;
-                }
-            }
-        },
-        defaultModes = [];
-
-        Object.keys(interactionOptions).forEach(item => {
-            if(interactionOptions[item] === true && modeMap[item] !== undefined) {
-                defaultModes.push(modeMap[item]);
-            }
-        });
+              timingFunction: string = this.engine.animationOptions.timingFunction;
 
         this.graphInstance = new SV.G6.Graph({
             container: DOMContainer,
@@ -71,7 +50,7 @@ export class Renderer {
             },
             fitView: this.engine.layoutOptions.fitView,
             modes: {
-                default: defaultModes
+                default: this.initBehaviors()
             }
         });
 
@@ -80,6 +59,54 @@ export class Renderer {
         });
 
         this.animations = new Animations(duration, timingFunction);
+    }
+
+    /**
+     * 初始化交互行为
+     * @returns 
+     */
+    private initBehaviors() {
+        const interactionOptions = this.engine.interactionOptions,
+              dragNode: boolean | string[] = interactionOptions.dragNode,
+              dragNodeFilter = node => {
+                  let model = node.item.getModel();
+
+                  if(node.item === null) {
+                      return false;
+                  }
+
+                  if(model.modelType === 'pointer') {
+                      return false;
+                  }
+
+                  if(typeof dragNode === 'boolean') {
+                      return dragNode;
+                  } 
+
+                  if(Array.isArray(dragNode) && dragNode.indexOf(model.modelName) > -1) {
+                      return true;
+                  }
+
+                  return false;
+              }
+
+        const modeMap = {
+            drag: 'drag-canvas',
+            zoom: 'zoom-canvas',
+            dragNode: {
+                type: 'drag-node',
+                shouldBegin: node => dragNodeFilter(node)
+            }
+        },
+        defaultModes = [];
+
+        Object.keys(interactionOptions).forEach(item => {
+            if(interactionOptions[item] && modeMap[item] !== undefined) {
+                defaultModes.push(modeMap[item]);
+            }
+        });
+
+        return defaultModes;
     }
 
     /**

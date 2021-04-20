@@ -3,7 +3,7 @@
 /**
  * 单链表
  */
-class LinkList extends Engine {
+ class LinkStack extends Engine {
     defineOptions() {
         return {
             element: { 
@@ -21,7 +21,7 @@ class LinkList extends Engine {
                 next: { 
                     type: 'line',
                     sourceAnchor: 1,
-                    targetAnchor: 0,
+                    targetAnchor: 2,
                     style: {
                         stroke: '#333',
                         endArrow: {
@@ -45,7 +45,7 @@ class LinkList extends Engine {
             },
             layout: {
                 xInterval: 50,
-                yInterval: 50
+                yInterval: 30
             }
         };
     }
@@ -61,11 +61,11 @@ class LinkList extends Engine {
             return null;
         }
 
-        let width = node.get('size')[0];
+        let height = node.get('size')[1];
 
         if(prev) {
-            node.set('y', prev.get('y'));
-            node.set('x', prev.get('x') + layoutOptions.xInterval + width);
+            node.set('x', prev.get('x'));
+            node.set('y', prev.get('y') + layoutOptions.yInterval + height);
         }
 
         if(node.next) {
@@ -90,20 +90,20 @@ class LinkList extends Engine {
 
         for(i = 0; i < rootNodes.length; i++) {
             let root = rootNodes[i],
-                height = root.get('size')[1];
+                width = root.get('size')[0];
 
-            root.set('y', root.get('y') + i * (layoutOptions.yInterval + height));
+            root.set('x', root.get('x') + i * (layoutOptions.xInterval + width));
             this.layoutItem(root, null, layoutOptions);
         }
     }
 }
 
 
-const LList = function(container) {
+const LStack = function(container) {
     return{
-        engine: new LinkList(container),
+        engine: new LinkStack(container),
         data: [[
-            { id: 1, root: true, next: 2, external: ['gg'] },
+            { id: 1, root: true, next: 2 },
             { id: 2, next: 3 },
             { id: 3, next: 4 },
             { id: 4, next: 5 },
@@ -115,7 +115,7 @@ const LList = function(container) {
             { id: 10 }
         ],
         [
-            { id: 1, root: true, next: 2, external: ['gg'] },
+            { id: 1, root: true, next: 2 },
             { id: 2, next: 3 },
             { id: 3, next: 6 },
             { id: 6, next: 7 },

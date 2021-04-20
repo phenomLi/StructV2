@@ -164,27 +164,66 @@ class BinaryTree extends Engine {
 const BTree = function(container) {
     return{
         engine: new BinaryTree(container),
-        data: [[
-            { id: 1, child: [2, 3], root: true, external: ['treeA', 'gear'] }, 
-            { id: 2, child: [null, 6] }, 
-            { id: 3, child: [5, 4] },
-            { id: 4, external: 'foo' },
-            { id: 5 },
-            { id: 6, external: 'bar', child: [null, 7] },
-            { id: 7 },
-            { id: 8, child: [9, 10], root: true },
-            { id: 9, child: [11, null] },
-            { id: 10 },
-            { id: 11 }
-        ],
-        [
-            { id: 1, child: [2, 3], root: true, external: 'treeA' }, 
-            { id: 2, external: 'gear' }, 
-            { id: 3, child: [5, 4] },
-            { id: 4, external: 'foo' },
-            { id: 5, child: [12, 13] },
-            { id: 12 }, { id: 13 }
-        ]]
+        data: [
+            // [
+            //     { id: 1, child: [2, 3], root: true, external: ['treeA', 'gear'] }, 
+            //     { id: 2, child: [null, 6] }, 
+            //     { id: 3, child: [5, 4] },
+            //     { id: 4, external: 'foo' },
+            //     { id: 5 },
+            //     { id: 6, external: 'bar', child: [null, 7] },
+            //     { id: 7 },
+            //     { id: 8, child: [9, 10], root: true },
+            //     { id: 9, child: [11, null] },
+            //     { id: 10 },
+            //     { id: 11 }
+            // ],
+            // [
+            //     { id: 1, child: [2, 3], root: true, external: 'treeA' }, 
+            //     { id: 2, external: 'gear' }, 
+            //     { id: 3, child: [5, 4] },
+            //     { id: 4, external: 'foo' },
+            //     { id: 5, child: [12, 13] },
+            //     { id: 12 }, { id: 13 }
+            // ]
+            [
+                {
+                    "external": [
+                        "r",
+                        "T1"
+                    ],
+                    "child": [
+                        6385376,
+                        6385424
+                    ],
+                    "id": 6385328,
+                    "name": "T1",
+                    "data": "Z",
+                    "root": true
+                },
+                {
+                    "child": [
+                        0,
+                        0
+                    ],
+                    "id": 6385376,
+                    "name": "T1.lchild",
+                    "data": "A"
+                },
+                {
+                    "external": [
+                        "t"
+                    ],
+                    "child": [
+                        0,
+                        0
+                    ],
+                    "id": 6385424,
+                    "name": "T1.rchild",
+                    "data": "B"
+                }
+            ]
+        ]
     } 
 };
 

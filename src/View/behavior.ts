@@ -9,14 +9,15 @@ export class Behavior {
         this.engine = engine;
         this.graphInstance = graphInstance;
 
-        const interactionOptions = this.engine.interactionOptions;
+        const interactionOptions = this.engine.interactionOptions,
+              selectNode: boolean | string[] = interactionOptions.selectNode;
 
         if(interactionOptions.dragNode) {
             this.initDragNode();
         }
         
         if(interactionOptions.selectNode) {
-            this.initSelectNode();
+            this.initSelectNode(selectNode);
         }
     }
 
@@ -67,16 +68,27 @@ export class Behavior {
 
     /**
      * 初始化节/边选中
+     * @param selectNode
      */
-    private initSelectNode() {
+    private initSelectNode(selectNode: boolean | string[]) {
         let defaultHighlightColor = '#f08a5d',
             curSelectItem = null,
             curSelectItemStyle = null;
 
+        if(selectNode === false) {
+            return;
+        }
+
         const selectCallback = ev => {
             const item = ev.item,
+                  model = item.getModel(),
                   type = item.getType(),
-                  highlightColor = item.getModel().style.selectedColor;
+                  name = model.modelName,
+                  highlightColor = model.style.selectedColor;
+
+            if(Array.isArray(selectNode) && selectNode.find(item => item === name) === undefined) {
+                return;
+            }
 
             if(curSelectItem && curSelectItem !== item) {
                 curSelectItem.update({
