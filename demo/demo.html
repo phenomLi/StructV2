@@ -35,7 +35,8 @@
 const Engine = SV.Engine,
       Group = SV.Group,
       Bound = SV.Bound,
-      G6 = SV.G6;
+      G6 = SV.G6,
+      Vector = SV.Vector;
 
 </script>
 <script src="./dataStruct/BinaryTree.js"></script>
@@ -44,11 +45,14 @@ const Engine = SV.Engine,
 <script src="./dataStruct/ChainHashTable.js"></script>
 <script src="./dataStruct/Stack.js"></script>
 <script src="./dataStruct/LinkStack.js"></script>
+<script src="./dataStruct/LinkQueue.js"></script>
+<script src="./dataStruct/Graph.js"></script>
+<script src="./dataStruct/DirectedGraph.js"></script>
 <script>
 
-const engines = [BTree, LList, A, CHT, St, LStack];
+const engines = [BTree, LList, A, CHT, St, LStack, LQueue, G, DG];
 
-let cur = engines[5](document.getElementById('container'));
+let cur = engines[8](document.getElementById('container'));
 
 cur.engine.render(cur.data[0]);
 
