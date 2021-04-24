@@ -43,6 +43,7 @@ export class Renderer {
             container: DOMContainer,
             width: DOMContainer.offsetWidth, 
             height: DOMContainer.offsetHeight,
+            groupByTypes: false,
             animate: enable,
             animateCfg: {
                 duration: duration,
@@ -134,6 +135,14 @@ export class Renderer {
     }   
 
     /**
+     * 查找被释放的节点
+     * @param constructedData 
+     */
+    private findFreedItems(constructedData: ConstructedData): G6NodeModel[] {
+        return Util.converterList(constructedData.element).filter(item => item.free).map(item => item.G6Item);
+    }
+
+    /**
      * 处理新增的 G6Item（主要是动画）
      * @param appendData 
      */
@@ -164,6 +173,12 @@ export class Renderer {
             });
         });
     }
+
+    /**
+     * 处理被 free 的 G6Item
+     * @param freedItems 
+     */
+    private handleFreedItems(freedItems: G6NodeModel[]) { }
 
     /**
      * 构建 G6 元素
@@ -197,6 +212,7 @@ export class Renderer {
      */
     public render(constructedData: ConstructedData) {
         let data: G6Data = Util.convertG6Data(constructedData),
+            freedItems = this.findFreedItems(constructedData),
             renderData: G6Data = null,
             appendData: G6Data = null,
             removeData: G6Data = null;
@@ -212,7 +228,6 @@ export class Renderer {
 
         if(this.isFirstRender) {
             this.graphInstance.read(renderData);
-            this.isFirstRender = false;
         }
         else {
             this.graphInstance.changeData(renderData);
@@ -229,6 +244,15 @@ export class Renderer {
             item.renderG6Item = this.graphInstance.findById(item.id);
             item.G6Item = item.renderG6Item;
         });
+
+        if(this.isFirstRender) {
+            this.graphInstance.getEdges().forEach(item => item.toFront());
+            this.graphInstance.paint();
+        }
+
+        if(this.isFirstRender) {
+            this.isFirstRender = false;
+        }
     }
 
     /**

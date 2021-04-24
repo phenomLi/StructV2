@@ -16,7 +16,7 @@ export default G6.registerNode('two-cell-node', {
                 width: width,
                 height: height,
                 stroke: cfg.style.stroke,
-                fill: 'transparent'
+                fill: '#eee'
             },
             name: 'wrapper'
         });

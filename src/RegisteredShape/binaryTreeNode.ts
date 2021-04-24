@@ -16,7 +16,7 @@ export default G6.registerNode('binary-tree-node', {
                 height: height,
                 stroke: cfg.style.stroke,
                 cursor: cfg.style.cursor,
-                fill: 'transparent'
+                fill: '#eee'
             },
             name: 'wrapper'
         });

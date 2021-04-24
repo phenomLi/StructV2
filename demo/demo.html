@@ -48,11 +48,12 @@ const Engine = SV.Engine,
 <script src="./dataStruct/LinkQueue.js"></script>
 <script src="./dataStruct/Graph.js"></script>
 <script src="./dataStruct/DirectedGraph.js"></script>
+<script src="./dataStruct/RingArray.js"></script>
 <script>
 
-const engines = [BTree, LList, A, CHT, St, LStack, LQueue, G, DG];
+const engines = [BTree, LList, A, CHT, St, LStack, LQueue, G, DG, RA];
 
-let cur = engines[8](document.getElementById('container'));
+let cur = engines[9](document.getElementById('container'));
 
 cur.engine.render(cur.data[0]);
 

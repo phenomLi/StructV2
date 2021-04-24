@@ -1,7 +1,6 @@
-import { Engine } from "../engine";
 import { ConstructedData } from "../Model/modelConstructor";
 import { SV } from "../StructV";
-import { G6Data, Renderer } from "../View/renderer";
+import { G6Data } from "../View/renderer";
 
 
 /**

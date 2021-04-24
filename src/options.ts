@@ -46,6 +46,8 @@ export interface LinkOption {
     sourceAnchor: number | ((index: number) => number);
     targetAnchor: number | ((index: number) => number);
     label: string;
+    controlPoints: { x: number, y: number }[];
+    curveOffset: number;
     labelOptions: LinkLabelOption;
     style: Style;
 }

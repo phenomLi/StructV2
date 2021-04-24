@@ -41,11 +41,11 @@ class Graph extends Engine {
             radius = layoutOptions.radius,
             intervalAngle = 2 * Math.PI / nodes.length;
 
-            for (let i = 0; i < nodes.length; i++) {
-                let [x, y] = Vector.rotation(-intervalAngle * i, [0, -radius]);
+        for (let i = 0; i < nodes.length; i++) {
+            let [x, y] = Vector.rotation(-intervalAngle * i, [0, -radius]);
 
-                nodes[i].set({x, y});
-            }
+            nodes[i].set({x, y});
+        }
     }
 }
 

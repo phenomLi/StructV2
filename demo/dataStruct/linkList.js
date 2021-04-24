@@ -33,6 +33,23 @@ class LinkList extends Engine {
                             fill: '#333'
                         }
                     }
+                },
+                loopNext: {
+                    type: 'arc',
+                    curveOffset: 50,
+                    sourceAnchor: 1,
+                    targetAnchor: 3,
+                    style: {
+                        stroke: '#333',
+                        endArrow: {
+                            path: G6.Arrow.triangle(6, 6, -2), 
+                            fill: '#333'
+                        },
+                        startArrow: {
+                            path: G6.Arrow.circle(2, -1), 
+                            fill: '#333'
+                        }
+                    }
                 }
             },
             pointer: {
@@ -107,7 +124,7 @@ const LList = function(container) {
             { id: 2, next: 3 },
             { id: 3, next: 4 },
             { id: 4, next: 5 },
-            { id: 5 },
+            { id: 5, loopNext: 6 },
             { id: 6, root: true, next: 7 },
             { id: 7, next: 8 }, 
             { id: 8, next: 4 }, 
