@@ -1,23 +1,19 @@
 import { Element, Pointer } from "./Model/modelData";
-import { Sources } from "./sources";
-import { ConstructedData, ModelConstructor } from "./Model/modelConstructor";
-import { Renderer } from "./View/renderer";
-import { AnimationOptions, ElementOption, InteractionOptions, LayoutOptions, LinkOption, Options, PointerOption } from "./options";
-import { Layouter } from "./View/layouter";
-import { Behavior } from "./View/behavior";
-import { Util } from "./Common/util";
+import { SourceElement } from "./sources";
+import { ModelConstructor, ConstructList } from "./Model/modelConstructor";
+import { AnimationOptions, ElementOption, EngineInitOptions, InteractionOptions, LayoutOptions, LinkOption, Options, PointerOption } from "./options";
+import { Behavior } from "./Behavior.ts/behavior";
+import { ViewManager } from "./View/viewManager";
 
 
 export class Engine { 
     private stringifySources: string = null; // 序列化的源数据
 
     private modelConstructor: ModelConstructor = null;
-    private layouter: Layouter = null;
-    private renderer: Renderer = null;
+    private viewManager: ViewManager
     private behavior: Behavior;
-    private graphInstance;
-    private constructedData: ConstructedData;
     
+    public initOptions: EngineInitOptions;
     public elementOptions: { [key: string]: ElementOption } = {  };
     public linkOptions: { [key: string]: LinkOption } = {  };
     public pointerOptions: { [key: string]: PointerOption } = {  };
@@ -25,9 +21,10 @@ export class Engine {
     public animationOptions: AnimationOptions = null;
     public interactionOptions: InteractionOptions = null;
 
-    constructor(DOMContainer: HTMLElement) {
+    constructor(DOMContainer: HTMLElement, initOptions: EngineInitOptions = { }) {
         const options: Options = this.defineOptions();
-
+        
+        this.initOptions = initOptions;
         this.elementOptions = options.element;
         this.linkOptions = options.link || { };
         this.pointerOptions = options.pointer || { };
@@ -47,21 +44,26 @@ export class Engine {
             drag: true,
             zoom: true,
             dragNode: true,
-            selectNode: true
+            selectNode: true,
+            changeHighlight: '#fc5185'
         }, options.interaction);
 
+        this.initOptions = Object.assign({
+            freedContainer: null,
+            leakContainer: null
+        }, initOptions);
+
         this.modelConstructor = new ModelConstructor(this);
-        this.layouter = new Layouter(this);
-        this.renderer = new Renderer(this, DOMContainer);
-        this.graphInstance = this.renderer.getGraphInstance();
-        this.behavior = new Behavior(this, this.renderer.getGraphInstance());
+        
+        this.viewManager = new ViewManager(this, DOMContainer);
+        this.behavior = new Behavior(this, this.viewManager.getG6Instance());
     }
 
     /**
      * 输入数据进行渲染
      * @param sourceData 
      */
-    public render(sourceData: Sources) {
+    public render(sourceData: SourceElement[] | { [key: string]: SourceElement[] }) {
         if(sourceData === undefined || sourceData === null) {
             return;
         }
@@ -71,13 +73,40 @@ export class Engine {
         if(stringifySources === this.stringifySources) return;
         this.stringifySources = stringifySources;
 
-        this.constructedData = this.modelConstructor.construct(sourceData);
+        let processedSourcesData = this.sourcesPreprocess(sourceData);
+        if(processedSourcesData) {
+            sourceData = processedSourcesData;
+        }
 
-        this.renderer.build(this.constructedData);
+        const sourceList: SourceElement[] = this.sourcesProcess(sourceData);
 
-        this.layouter.layout(this.constructedData, this.renderer.getModelList(), this.layout);
+        // 1 转换模型（data => model）
+        const constructList: ConstructList = this.modelConstructor.construct(sourceList);
+        
+        // 2 渲染（使用g6进行渲染）
+        this.viewManager.renderAll(constructList, this.layout.bind(this));
+    }
+    
+    /**
+     * 源数据处理
+     * @param sourceData 
+     */
+    private sourcesProcess(sourceData: SourceElement[] | { [key: string]: SourceElement[] }): SourceElement[] {
+        if(Array.isArray(sourceData)) {
+            return sourceData;
+        }
 
-        this.renderer.render(this.constructedData);
+        const sourceList: SourceElement[] = [];
+
+        Object.keys(sourceData).forEach(name => {
+            sourceData[name].forEach(item => {
+                item.type = name;
+            });
+
+            sourceList.push(...sourceData[name]);
+        });
+
+        return sourceList;
     }
 
     /**
@@ -89,21 +118,28 @@ export class Engine {
     }
 
     /**
+     * 对源数据进行预处理
+     * @param sourceData 
+     */
+    protected sourcesPreprocess(sourceData: SourceElement[] | { [key: string]: SourceElement[] }): SourceElement[] | { [key: string]: SourceElement[] } | void {
+        return sourceData;
+    }
+
+    /**
      * 设置布局函数
      * @overwrite
      */
-    protected layout(elementContainer: { [ket: string]: Element[] }, layoutOptions: LayoutOptions) { }
+    protected layout(elements: Element[], layoutOptions: LayoutOptions) { }
 
     /**
      * 重新布局
      */
     public reLayout() {
-        const modelList = this.renderer.getModelList();
+        const constructList: ConstructList = this.modelConstructor.getConstructList();
 
-        this.layouter.layout(this.constructedData, modelList, this.layout);
-        modelList.forEach(item => {
-            if(item.modelType === 'link') return;
+        this.viewManager.reLayout(constructList, this.layout.bind(this));
 
+        [...constructList.element, ...constructList.pointer].forEach(item => {
             let model = item.G6Item.getModel(),
                 x = item.get('x'),
                 y = item.get('y');
@@ -112,35 +148,38 @@ export class Engine {
             model.y = y;
         });
 
-        this.graphInstance.refresh();
+        this.viewManager.refresh();
     }
 
     /**
      * 获取 G6 实例
      */
-     public getGraphInstance() {
-        return this.graphInstance;
+    public getGraphInstance() {
+        return this.viewManager.getG6Instance();
     }
 
     /**
      * 获取所有 element
      */
     public getElements(): Element[] {
-        return Util.converterList(this.constructedData.element);
+        const constructList = this.modelConstructor.getConstructList();
+        return constructList.element;
     }
 
     /**
      * 获取所有 pointer
      */
     public getPointers(): Pointer[] {
-        return Util.converterList(this.constructedData.pointer);
+        const constructList = this.modelConstructor.getConstructList();
+        return constructList.pointer;
     }
 
     /**
      * 获取所有 link
      */
     public getLinks() {
-        return Util.converterList(this.constructedData.link);
+        const constructList = this.modelConstructor.getConstructList();
+        return constructList.link;
     }
 
     /**
@@ -149,7 +188,7 @@ export class Engine {
      * @param height 
      */
     public resize(width: number, height: number) {
-        this.graphInstance.changeSize(width, height);
+        this.viewManager.resize(width, height);
     }
 
     /**
@@ -165,11 +204,8 @@ export class Engine {
      * 销毁引擎
      */
     public destroy() {
-        this.graphInstance.destroy();
-        this.modelConstructor = null;
-        this.layouter = null;
-        this.renderer = null;
+        this.modelConstructor.destroy();
+        this.viewManager.destroy();
         this.behavior = null;
-        this.graphInstance = null;
     }
 };

@@ -1,4 +1,5 @@
-import { ConstructedData } from "../Model/modelConstructor";
+import { ConstructList } from "../Model/modelConstructor";
+import { G6EdgeModel, G6NodeModel, Link, Model } from "../Model/modelData";
 import { SV } from "../StructV";
 import { G6Data } from "../View/renderer";
 
@@ -7,7 +8,6 @@ import { G6Data } from "../View/renderer";
  * 工具函数
  */
 export const Util = {
-
 
     /**
      * 生成唯一id
@@ -78,26 +78,37 @@ export const Util = {
 
     /**
      * 
-     * @param constructedDataType 
+     * @param constructListType
      * @returns 
      */
-    converterList(constructedDataType: ConstructedData[keyof ConstructedData]) {
-        return [].concat(...Object.keys(constructedDataType).map(item => constructedDataType[item]));
+     converterList(modelContainer: { [key: string]: ConstructList[keyof ConstructList]}) {
+        return [].concat(...Object.keys(modelContainer).map(item => modelContainer[item]));
     },
 
     /**
      * G6 data 转换器
-     * @param constructedData 
+     * @param constructList 
      * @returns 
      */
-    convertG6Data(constructedData: ConstructedData): G6Data {
-        let nodes = [...Util.converterList(constructedData.element), ...Util.converterList(constructedData.pointer)],
-            edges = Util.converterList(constructedData.link);
+    convertG6Data(constructList: ConstructList): G6Data {
+        let nodes = [...constructList.element, ...constructList.pointer],
+            edges = constructList.link;
 
         return { 
-            nodes: nodes.map(item => item.cloneProps()), 
-            edges: edges.map(item => item.cloneProps())
+            nodes: nodes.map(item => item.cloneProps()) as G6NodeModel[], 
+            edges: edges.map(item => item.cloneProps()) as G6EdgeModel[]
         };
+    },
+
+    /**
+     * 将 modelList 转换到 G6Data
+     * @param modelList
+     */
+    convertModelList2G6Data(modelList: Model[]): G6Data {
+        return {
+            nodes: <G6NodeModel[]>(modelList.filter(item => !(item instanceof Link)).map(item => item.cloneProps())),
+            edges: <G6EdgeModel[]>(modelList.filter(item => item instanceof Link).map(item => item.cloneProps()))
+        }
     },
 
     /**

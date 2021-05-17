@@ -1,72 +1,74 @@
 import { Util } from "../Common/util";
 import { Engine } from "../engine";
 import { LinkOption, PointerOption } from "../options";
-import { sourceLinkData, SourceElement, Sources, LinkTarget } from "../sources";
+import { sourceLinkData, SourceElement, LinkTarget } from "../sources";
 import { Element, Link, Pointer } from "./modelData";
 
 
-export interface ConstructedData {
-    element: { [key: string]: Element[] };
-    link: { [key: string]: Link[] };
-    pointer: { [key: string]: Pointer[] };
+export interface ConstructList {
+    element: Element[];
+    link: Link[];
+    pointer: Pointer[];
 };
 
 
 export class ModelConstructor {
     private engine: Engine;
-    private constructedData: ConstructedData;
+    private constructList: ConstructList;
 
     constructor(engine: Engine) {
         this.engine = engine;
-        this.constructedData = null;
     }
 
     /**
      * 构建element，link和pointer
-     * @param sourceData 
+     * @param sourceList 
      */
-    public construct(sourceData: Sources): ConstructedData {
-        let elementContainer = this.constructElements(sourceData),
+    public construct(sourceList: SourceElement[]): ConstructList {
+        let elementContainer = this.constructElements(sourceList),
             linkContainer = this.constructLinks(this.engine.linkOptions, elementContainer),
             pointerContainer = this.constructPointers(this.engine.pointerOptions, elementContainer);
-
-        this.constructedData = { 
-            element: elementContainer,
-            link: linkContainer,
-            pointer: pointerContainer
-        };
         
-        return this.constructedData;
+        this.constructList = { 
+            element: Util.converterList(elementContainer),
+            link: Util.converterList(linkContainer),
+            pointer: Util.converterList(pointerContainer)
+        };
+
+        return this.constructList;
+    }
+
+    /**
+     * 
+     * @returns 
+     */
+    public getConstructList(): ConstructList {
+        return this.constructList;
     }
 
     /**
      * 从源数据构建 element 集
-     * @param sourceData
+     * @param sourceList
      */
-    private constructElements(sourceData: Sources): { [key: string]: Element[] } {
-        let defaultElementName: string = 'default',
+    private constructElements(sourceList: SourceElement[]): { [key: string]: Element[] } {
+        let defaultElementType: string = 'default',
             elementContainer: { [key: string]: Element[] } = { };
 
-        if(Array.isArray(sourceData)) {
-            elementContainer[defaultElementName] = [];
-            sourceData.forEach(item => {
-                if(item) {
-                    let ele = this.createElement(item, defaultElementName);
-                    elementContainer[defaultElementName].push(ele);
-                }
-            });
-        }
-        else {
-            Object.keys(sourceData).forEach(prop => {
-                elementContainer[prop] = [];
-                sourceData[prop].forEach(item => {
-                    if(item) {
-                        let element = this.createElement(item, prop);
-                        elementContainer[prop].push(element);
-                    }
-                });
-            });
-        }
+        sourceList.forEach(item => {
+            if(item === null) {
+                return;
+            }
+
+            if(item.type === undefined || item.type === null) {
+                item.type = defaultElementType;
+            }
+
+            if(elementContainer[item.type] === undefined) {
+                elementContainer[item.type] = [];
+            }
+
+            elementContainer[item.type].push(this.createElement(item, item.type));
+        });
 
         return elementContainer;
     }
@@ -179,7 +181,7 @@ export class ModelConstructor {
             label = elementOption.label? this.parserElementContent(sourceElement, elementOption.label): '',
             id =  elementName + '.' + sourceElement.id.toString();
 
-        if(label === null || label === undefined) {
+        if(label === null || label === 'undefined') {
             label = '';
         }
 
@@ -256,7 +258,7 @@ export class ModelConstructor {
         element: Element, 
         linkTarget: LinkTarget
     ): Element {
-        let elementName = element.modelName,
+        let elementName = element.getType(),
             elementList: Element[], 
             targetId = linkTarget,
             targetElement = null;
@@ -284,5 +286,12 @@ export class ModelConstructor {
         
         targetElement = elementList.find(item => item.sourceId === targetId);
         return targetElement || null;
+    }
+
+    /**
+     * 销毁
+     */
+    destroy() {
+        this.constructList = null;
     }
 };

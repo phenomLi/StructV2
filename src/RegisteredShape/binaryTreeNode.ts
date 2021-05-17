@@ -14,7 +14,7 @@ export default G6.registerNode('binary-tree-node', {
                 y: height / 2,
                 width: width,
                 height: height,
-                stroke: cfg.style.stroke,
+                stroke: cfg.style.stroke || '#333',
                 cursor: cfg.style.cursor,
                 fill: '#eee'
             },
@@ -28,7 +28,7 @@ export default G6.registerNode('binary-tree-node', {
                 width: width / 2,
                 height: height,
                 fill: cfg.style.fill,
-                stroke: cfg.style.stroke,
+                stroke: cfg.style.stroke || '#333',
                 cursor: cfg.style.cursor
             },
             name: 'mid',

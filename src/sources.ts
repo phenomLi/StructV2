@@ -14,7 +14,5 @@ export interface SourceElement {
     [key: string]: any | sourceLinkData | sourcePointerData;
 }
 
-// 源数据格式
-export type Sources = { } | SourceElement[];
 
 

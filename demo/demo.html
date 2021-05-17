@@ -14,7 +14,28 @@
 
 .container {
     width: 100%;
-    height: 600px;
+    height: 400px;
+    background-color: #fafafa;
+    border: 1px solid #ccc;
+}
+
+.down {
+    display:  flex;
+    margin-top: 20px;
+}
+
+#freed {
+    width: 200px;
+    height: 300px;
+    border: 1px solid #ccc;
+    background-color: #fafafa;
+    margin-right: 30px;
+}
+
+#leak {
+    width: 400px;
+    height: 300px;
+    border: 1px solid #ccc;
     background-color: #fafafa;
 }
 
@@ -22,11 +43,18 @@
 </style>
 </head>
 <body>
+
 <div class="container" id="container"></div>
+
 <button id="btn">change</button>
 <button id="btn-next">reLayout</button>
 <button id="btn-set">set</button>
 <span id="pos"></span>
+
+<div class="down">
+    <div id="freed"></div>
+    <div id="leak"></div>
+</div>
 
 
 <script src="./../dist/sv.js"></script>
@@ -40,7 +68,9 @@ const Engine = SV.Engine,
 
 </script>
 <script src="./dataStruct/BinaryTree.js"></script>
+
 <script src="./dataStruct/LinkList.js"></script>
+
 <script src="./dataStruct/Array.js"></script>
 <script src="./dataStruct/ChainHashTable.js"></script>
 <script src="./dataStruct/Stack.js"></script>
@@ -49,16 +79,34 @@ const Engine = SV.Engine,
 <script src="./dataStruct/Graph.js"></script>
 <script src="./dataStruct/DirectedGraph.js"></script>
 <script src="./dataStruct/RingArray.js"></script>
+<script src="./dataStruct/GeneralizedList.js"></script>
 <script>
 
-const engines = [BTree, LList, A, CHT, St, LStack, LQueue, G, DG, RA];
+const engines = {
+    0: BTree, 
+    1: LList, 
+    2: A, 
+    3: CHT, 
+    4: St, 
+    5: LStack, 
+    6: LQueue, 
+    7: G, 
+    8: DG,
+    9: RA, 
+    10: GL
+};
 
-let cur = engines[9](document.getElementById('container'));
+let dataCounter = 0;
 
-cur.engine.render(cur.data[0]);
+let cur = engines[3](document.getElementById('container'), { 
+    freedContainer: document.getElementById('freed'),
+    leakContainer: document.getElementById('leak')
+});
+
+cur.engine.render(cur.data[dataCounter]);
 
 document.getElementById('btn').addEventListener('click', e => {
-    cur.engine.render(cur.data[1]);
+    cur.engine.render(cur.data[++dataCounter]);
 });
 
 document.getElementById('btn-next').addEventListener('click', e => {
@@ -81,6 +129,9 @@ container.addEventListener('mousemove', e => {
     let x = e.offsetX, y = e.offsetY;
     pos.innerHTML = `${x},${y}`;
 });
+
+
+
 
 </script>
 </body>

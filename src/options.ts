@@ -46,7 +46,6 @@ export interface LinkOption {
     sourceAnchor: number | ((index: number) => number);
     targetAnchor: number | ((index: number) => number);
     label: string;
-    controlPoints: { x: number, y: number }[];
     curveOffset: number;
     labelOptions: LinkLabelOption;
     style: Style;
@@ -54,7 +53,7 @@ export interface LinkOption {
 
 
 export interface PointerOption extends ElementOption {
-    position: 'top' | 'left' | 'bottom' | 'right';
+    anchor: number;
     offset: number;
 };
 
@@ -78,6 +77,7 @@ export interface InteractionOptions {
     zoom: boolean;
     dragNode: boolean | string[];
     selectNode: boolean | string[];
+    changeHighlight: string;
 };
 
 
@@ -88,6 +88,12 @@ export interface Options {
     layout?: LayoutOptions;
     animation?: AnimationOptions;
     interaction?: InteractionOptions;
+};
+
+
+export interface EngineInitOptions {
+    freedContainer?: HTMLElement;
+    leakContainer?: HTMLElement;
 };
 
 

@@ -57,7 +57,8 @@ export default G6.registerNode('two-cell-node', {
     getAnchorPoints() {
         return [
             [0, 0.5],
-            [3 / 4, 0.5]
+            [3 / 4, 0.5],
+            [0.5, 0]
         ];
     }
 });

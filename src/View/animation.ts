@@ -1,3 +1,4 @@
+import { Model } from "../Model/modelData";
 import { SV } from "../StructV";
 
 
@@ -5,37 +6,32 @@ import { SV } from "../StructV";
 /**
  * 动画表
  */
-export class Animations {
-    private duration: number;
-    private timingFunction: string;
-    private mat3 = SV.G6.Util.mat3;
-
-    constructor(duration: number, timingFunction: string) {
-        this.duration = duration;
-        this.timingFunction = timingFunction;
-    }
-
+export const Animations = {
+ 
     /**
      * 添加节点 / 边时的动画效果
-     * @param G6Item 
+     * @param model 
+     * @param duration 
+     * @param timingFunction 
      * @param callback 
      */
-    append(G6Item, callback: Function = null) {
-        const type = G6Item.getType(),
+    animate_append(model: Model, duration: number, timingFunction: string, callback: Function = null) {
+        const G6Item = model.G6Item,
+              type = G6Item.getType(),
               group = G6Item.getContainer(),
+              Mat3 = SV.Mat3,
               animateCfg = {
-                  duration: this.duration,
-                  easing: this.timingFunction,
+                  duration: duration,
+                  easing: timingFunction,
                   callback
               };
 
         if(type === 'node') {
-            let mat3 = this.mat3,
-                matrix = group.getMatrix(),
-                targetMatrix = mat3.clone(matrix);
+            let matrix = group.getMatrix(),
+                targetMatrix = Mat3.clone(matrix);
 
-            mat3.scale(matrix, matrix, [0, 0]);
-            mat3.scale(targetMatrix, targetMatrix, [1, 1]);
+            Mat3.scale(matrix, matrix, [0, 0]);
+            Mat3.scale(targetMatrix, targetMatrix, [1, 1]);
 
             group.attr({ opacity: 0, matrix });
             group.animate({ opacity: 1, matrix: targetMatrix }, animateCfg);
@@ -48,27 +44,30 @@ export class Animations {
             line.attr({ lineDash: [0, length], opacity: 0 });
             line.animate({ lineDash: [length, 0], opacity: 1 }, animateCfg);
         }
-    }
+    },
 
     /**
      * 移除节点 / 边时的动画效果
-     * @param G6Item 
+     * @param model 
+     * @param duration 
+     * @param timingFunction 
      * @param callback 
      */
-    remove(G6Item, callback: Function = null) {
-        const type = G6Item.getType(),
+     animate_remove(model: Model, duration: number, timingFunction: string, callback: Function = null) {
+        const G6Item = model.G6Item,
+              type = G6Item.getType(),
               group = G6Item.getContainer(),
+              Mat3 = SV.Mat3,
               animateCfg = {
-                  duration: this.duration,
-                  easing: this.timingFunction,
+                  duration: duration,
+                  easing: timingFunction,
                   callback
               };
 
         if(type === 'node') {
-            let mat3 = this.mat3,
-                matrix = mat3.clone(group.getMatrix());
+            let matrix = Mat3.clone(group.getMatrix());
 
-            mat3.scale(matrix, matrix, [0, 0]);
+            Mat3.scale(matrix, matrix, [0, 0]);
             group.animate({ opacity: 0, matrix }, animateCfg);
         }
 

@@ -1,4 +1,4 @@
-import { Vector } from "../Common/vector";
+import { Vector } from "./vector";
 
 
 

@@ -13,7 +13,7 @@ class LinkList extends Engine {
                     size: [60, 30],
                     style: {
                         stroke: '#333',
-                        fill: '#b83b5e'
+                        fill: '#eaffd0'
                     }
                 }
             },
@@ -24,10 +24,7 @@ class LinkList extends Engine {
                     targetAnchor: 0,
                     style: {
                         stroke: '#333',
-                        endArrow: {
-                            path: G6.Arrow.triangle(8, 6, 0), 
-                            fill: '#333'
-                        },
+                        endArrow: 'default',
                         startArrow: {
                             path: G6.Arrow.circle(2, -1), 
                             fill: '#333'
@@ -41,10 +38,7 @@ class LinkList extends Engine {
                     targetAnchor: 3,
                     style: {
                         stroke: '#333',
-                        endArrow: {
-                            path: G6.Arrow.triangle(6, 6, -2), 
-                            fill: '#333'
-                        },
+                        endArrow: 'default',
                         startArrow: {
                             path: G6.Arrow.circle(2, -1), 
                             fill: '#333'
@@ -92,7 +86,7 @@ class LinkList extends Engine {
 
 
     layout(elements, layoutOptions) {
-        let nodes = elements.default,
+        let nodes = elements,
             rootNodes = [],
             node,
             i;
@@ -116,9 +110,9 @@ class LinkList extends Engine {
 }
 
 
-const LList = function(container) {
+const LList = function(container, options) {
     return{
-        engine: new LinkList(container),
+        engine: new LinkList(container, options),
         data: [[
             { id: 1, root: true, next: 2, external: ['gg'] },
             { id: 2, next: 3 },
@@ -129,15 +123,19 @@ const LList = function(container) {
             { id: 7, next: 8 }, 
             { id: 8, next: 4 }, 
             { id: 9, root: true, next: 10 },
-            { id: 10 }
+            { id: 10, free: true }
         ],
         [
-            { id: 1, root: true, next: 2, external: ['gg'] },
+            { id: 1, root: true, next: 2 },
             { id: 2, next: 3 },
-            { id: 3, next: 6 },
-            { id: 6, next: 7 },
-            { id: 7, next: 8 }, 
-            { id: 8 }
+            { id: 3, next: 8, external: ['gg'] },
+            { id: 8, next: 12 },
+            { id: 12, next: 13 },
+            { id: 13 } 
+        ],
+        [
+            { id: 1, root: true, next: 2 },
+            { id: 2 }
         ]]
     } 
 };

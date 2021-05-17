@@ -1,5 +1,5 @@
 import { Engine } from "../engine";
-import { Util } from "./../Common/util";
+import { Util } from "../Common/util";
 
 export class Behavior {
     private engine: Engine;
@@ -10,10 +10,11 @@ export class Behavior {
         this.graphInstance = graphInstance;
 
         const interactionOptions = this.engine.interactionOptions,
-              selectNode: boolean | string[] = interactionOptions.selectNode;
+              selectNode: boolean | string[] = interactionOptions.selectNode,
+              dragNode: boolean | string[] = interactionOptions.dragNode;
 
         if(interactionOptions.dragNode) {
-            this.initDragNode();
+            this.initDragNode(dragNode);
         }
         
         if(interactionOptions.selectNode) {
@@ -24,7 +25,7 @@ export class Behavior {
     /**
      * 初始化节点拖拽事件
      */
-    private initDragNode() {
+    private initDragNode(dragNode: boolean | string[]) {
         let pointer = null,
             pointerX = null,
             pointerY = null,
@@ -32,7 +33,17 @@ export class Behavior {
             dragStartY = null;
 
         this.graphInstance.on('node:dragstart', ev => {
-            pointer = this.graphInstance.findById(ev.item.getModel().externalPointerId);
+            if(dragNode === false) {
+                return;
+            }
+
+            let model = ev.item.getModel();
+            
+            if(Array.isArray(dragNode) && dragNode.find(item => item === model.modelName) === undefined) {
+                return;
+            }
+
+            pointer = this.graphInstance.findById(model.externalPointerId);
             
             if(pointer) {
                 pointerX = pointer.getModel().x,
@@ -90,6 +101,10 @@ export class Behavior {
                 return;
             }
 
+            if(model.isDynamic) {
+                return;
+            }
+
             if(curSelectItem && curSelectItem !== item) {
                 curSelectItem.update({
                     style: curSelectItemStyle
@@ -128,8 +143,12 @@ export class Behavior {
      * @param callback 
      */
      public on(eventName: string, callback: Function) {
-        if(this.graphInstance) {
-            this.graphInstance.on(eventName, callback)
+        if(this.graphInstance === null) {
+            return;
         }
+
+        this.graphInstance.on(eventName, evt => {
+            callback(evt.item);
+        });
     }
 };

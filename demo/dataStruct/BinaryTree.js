@@ -27,10 +27,7 @@ class BinaryTree extends Engine {
                         stroke: '#333',
                         lineAppendWidth: 6,
                         cursor: 'pointer',
-                        endArrow: {
-                            path: G6.Arrow.triangle(8, 6, 0), 
-                            fill: '#333'
-                        },
+                        endArrow: 'default',
                         startArrow: {
                             path: G6.Arrow.circle(2, -1), 
                             fill: '#333'
@@ -130,7 +127,7 @@ class BinaryTree extends Engine {
      * @param {*} layoutOptions 
      */
     layout(elements, layoutOptions) {
-        let nodes = elements.default,
+        let nodes = elements,
             rootNodes = [],
             node,
             root,

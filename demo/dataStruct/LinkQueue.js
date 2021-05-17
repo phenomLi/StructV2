@@ -1,94 +1,95 @@
 
 
-G6.registerNode('link-Queue-head', {
-    draw(cfg, group) {
-        cfg.size = cfg.size || [30, 10];
+// G6.registerNode('link-Queue-head', {
+//     draw(cfg, group) {
+//         cfg.size = cfg.size || [30, 10];
 
-        const width = cfg.size[0],
-              height = cfg.size[1];
+//         const width = cfg.size[0],
+//               height = cfg.size[1];
 
-        const wrapperRect = group.addShape('rect', {
-            attrs: {
-                x: width / 2,
-                y: height / 2,
-                width: width,
-                height: height,
-                stroke: cfg.style.stroke,
-                fill: 'transparent'
-            },
-            name: 'wrapper'
-        });
+//         const wrapperRect = group.addShape('rect', {
+//             attrs: {
+//                 x: width / 2,
+//                 y: height / 2,
+//                 width: width,
+//                 height: height,
+//                 stroke: cfg.style.stroke,
+//                 fill: 'transparent'
+//             },
+//             name: 'wrapper'
+//         });
 
-        group.addShape('rect', {
-            attrs: {
-                x: width / 2,
-                y: height / 2,
-                width: width,
-                height: height / 2,
-                fill: cfg.style.fill,
-                stroke: cfg.style.stroke
-            },
-            name: 'top-rect'
-        });
+//         group.addShape('rect', {
+//             attrs: {
+//                 x: width / 2,
+//                 y: height / 2,
+//                 width: width,
+//                 height: height / 2,
+//                 fill: cfg.style.fill,
+//                 stroke: cfg.style.stroke
+//             },
+//             name: 'top-rect'
+//         });
 
-        group.addShape('rect', {
-            attrs: {
-                x: width / 2,
-                y: height,
-                width: width,
-                height: height / 2,
-                fill: cfg.style.fill,
-                stroke: cfg.style.stroke
-            },
-            name: 'bottom-rect'
-        });
+//         group.addShape('rect', {
+//             attrs: {
+//                 x: width / 2,
+//                 y: height,
+//                 width: width,
+//                 height: height / 2,
+//                 fill: cfg.style.fill,
+//                 stroke: cfg.style.stroke
+//             },
+//             name: 'bottom-rect'
+//         });
 
-        group.addShape('text', {
-            attrs: {
-                x: width, 
-                y: height * (3 / 4),
-                textAlign: 'center',
-                textBaseline: 'middle',
-                text: 'front',
-                fill: '#000',
-                fontSize: 16
-            },
-            name: 'front'
-        });
+//         group.addShape('text', {
+//             attrs: {
+//                 x: width, 
+//                 y: height * (3 / 4),
+//                 textAlign: 'center',
+//                 textBaseline: 'middle',
+//                 text: 'front',
+//                 fill: '#000',
+//                 fontSize: 16
+//             },
+//             name: 'front'
+//         });
 
-        group.addShape('text', {
-            attrs: {
-                x: width, 
-                y: height * (5 / 4),
-                textAlign: 'center',
-                textBaseline: 'middle',
-                text: 'rear',
-                fill: '#000',
-                fontSize: 16
-            },
-            name: 'rear'
-        });
+//         group.addShape('text', {
+//             attrs: {
+//                 x: width, 
+//                 y: height * (5 / 4),
+//                 textAlign: 'center',
+//                 textBaseline: 'middle',
+//                 text: 'rear',
+//                 fill: '#000',
+//                 fontSize: 16
+//             },
+//             name: 'rear'
+//         });
 
-        return wrapperRect;
-    },
+//         return wrapperRect;
+//     },
 
-    getAnchorPoints() {
-        return [
-            [1, 0.25],
-            [1, 0.75]
-        ];
-    }
-});
+//     getAnchorPoints() {
+//         return [
+//             [1, 0.25],
+//             [1, 0.75]
+//         ];
+//     }
+// });
 
 
  class LinkQueue extends Engine {
+
     defineOptions() {
         return {
             element: { 
                 head: {
-                    type: 'link-Queue-head',
-                    label: '[id]',
-                    size: [60, 80],
+                    type: 'rect',
+                    label: '[label]',
+                    size: [60, 40],
                     style: {
                         stroke: '#333',
                         fill: '#b83b5e'
@@ -106,9 +107,9 @@ G6.registerNode('link-Queue-head', {
             },
             link: {
                 front: {
-                    type: 'line',
-                    sourceAnchor: 0,
-                    targetAnchor: 0,
+                    type: 'polyline',
+                    sourceAnchor: 1,
+                    targetAnchor: 5,
                     style: {
                         stroke: '#333',
                         endArrow: {
@@ -120,7 +121,7 @@ G6.registerNode('link-Queue-head', {
                 rear: {
                     type: 'polyline',
                     sourceAnchor: 1,
-                    targetAnchor: 3,
+                    targetAnchor: 5,
                     style: {
                         stroke: '#333',
                         endArrow: {
@@ -157,10 +158,16 @@ G6.registerNode('link-Queue-head', {
             layout: {
                 xInterval: 50,
                 yInterval: 50
+            },
+            interaction: {
+                dragNode: ['node']
             }
         };
     }
 
+    sourcesPreprocess(sources) {
+        sources.head[1].external = null;
+    }
 
     /**
      * 对子树进行递归布局
@@ -186,51 +193,56 @@ G6.registerNode('link-Queue-head', {
 
 
     layout(elements, layoutOptions) {
-        let head = elements.head[0];
+        let head1 = elements.head[0],
+            head2 = elements.head[1],
+            nodes = elements.node,
+            headHeight = head1.get('size')[1];
+        
+        let roots = nodes.filter(item => item.root).reverse();
 
-        if(head.front) {
-            let d = head.get('size')[1] / 2 - head.front.get('size')[1],
-                x = layoutOptions.xInterval * 2.5,
-                y = head.front.get('size')[1] / 2 + 1.5 * d;
+        for(let i = 0; i < roots.length; i++) {
+            let root = roots[i],
+                height = root.get('size')[1];
 
-            head.front.set({ x, y });
+            root.set('y', root.get('y') + i * (layoutOptions.yInterval + height));
+            this.layoutItem(root, null, layoutOptions);
         }
 
-        if(head.front.next) {
-            this.layoutItem(head.front.next, head.front, layoutOptions);
-        }
+        let x = -50, y = roots.length? roots[roots.length - 1].get('y'): 0,
+            nodeHeight = roots.length? roots[roots.length - 1].get('size')[1]: 0;
+            
+        head1.set({ x, y: y + nodeHeight * 3 });
+        head2.set({ x, y: head1.get('y') + headHeight });
     }
 }
 
-
+const data = {
+    head: [
+        {
+            "type": "QPtr",
+            "id": 140737338526359,
+            "label": "front",
+            "front": "node#8358681150976310000",
+            "external": [
+                "lq"
+            ]
+        },
+        {
+            "type": "QPtr",
+            "id": 140737338526360,
+            "label": "rear",
+            "rear": "node#15844482482171916",
+            "external": null
+        }
+    ],
+    node: []
+}
 
 
 const LQueue = function(container) {
     return{
         engine: new LinkQueue(container),
-        data: [{
-            head: [{
-                type: "QPtr",
-                id: 44,
-                front: 'node#1',
-                rear: 'node#13'
-            }],
-            node: [
-                {
-                    id: 1,
-                    next: 12,
-                    root: true
-                },
-                {
-                    id: 12,
-                    next: 13
-                },
-                {
-                    id: 13,
-                    next: null
-                }
-            ]
-        }]
+        data: [data]
     } 
 };
 

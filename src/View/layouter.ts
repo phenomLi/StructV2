@@ -1,10 +1,9 @@
-import { Engine } from "../engine";
-import { ConstructedData } from "../Model/modelConstructor";
-import { Element, Model, Pointer } from "../Model/modelData";
-import { LayoutOptions, PointerOption } from "../options";
-import { Bound, BoundingRect } from "./boundingRect";
-
-
+import { Bound, BoundingRect } from '../Common/boundingRect';
+import { Engine } from '../engine';
+import { ConstructList } from '../Model/modelConstructor';
+import { Element, Model, Pointer } from '../Model/modelData';
+import { LayoutOptions, PointerOption } from '../options';
+import { Container } from './container/container';
 
 
 export class Layouter {
@@ -14,15 +13,54 @@ export class Layouter {
         this.engine = engine;
     }
 
+
+    /**
+     * 初始化布局参数
+     * @param elements 
+     * @param pointers 
+     */
+     private initLayoutValue(elements: Element[], pointers: Pointer[]) {
+        [...elements, ...pointers].forEach(item => {
+            item.set('rotation', item.get('rotation'));
+            item.set({ x: 0, y: 0 });
+        });
+    }
+
+    /**
+     * 布局外部指针
+     * @param pointer 
+     */
+    private layoutPointer(pointers: Pointer[]) {
+        pointers.forEach(item => {
+            const options: PointerOption = this.engine.pointerOptions[item.getType()],
+                  offset = options.offset || 8,
+                  anchor = options.anchor || 0;
+
+            let target = item.target,
+                targetBound: BoundingRect = item.target.getBound(),
+                anchorPosition = item.target.G6Item.getAnchorPoints()[anchor];
+
+            item.set({
+                x: targetBound.x + targetBound.width / 2,
+                y: targetBound.y - offset
+            });
+        });
+    }   
+
     /**
      * 将视图调整至画布中心
-     * @param nodes
+     * @param container
+     * @param models
      */
-    private fitCenter(models: Model[]) {
+     private fitCenter(container: Container, models: Model[]) {
+        if(models.length === 0) {
+            return;
+        }   
+
         const viewBound: BoundingRect = models.map(item => item.getBound()).reduce((prev, cur) => Bound.union(prev, cur));
 
-        let width = this.engine.getGraphInstance().getWidth(),
-            height = this.engine.getGraphInstance().getHeight(),
+        let width = container.getG6Instance().getWidth(),
+            height = container.getG6Instance().getHeight(),
             centerX = width / 2, centerY = height / 2,
             boundCenterX = viewBound.x + viewBound.width / 2,
             boundCenterY = viewBound.y + viewBound.height / 2,
@@ -38,55 +76,33 @@ export class Layouter {
     }
 
     /**
-     * 布局外部指针
-     * @param pointer 
-     */
-    private layoutPointer(pointer: { [key: string]: Pointer[] }) {
-        Object.keys(pointer).map(name => {
-            const options: PointerOption = this.engine.pointerOptions[name],
-                  pointerList: Pointer[] = pointer[name],
-                  offset = options.offset || 8;
-
-            pointerList.forEach(item => {
-                let targetBound: BoundingRect = item.target.getBound();
-                item.set({
-                    x: targetBound.x + targetBound.width / 2,
-                    y: targetBound.y - offset
-                });
-            });
-        });
-    }   
-
-    /**
-     * 主布局函数
-     * @param constructedData 
-     * @param modelList
+     * 进行布局
+     * @param container 
+     * @param constructList 
      * @param layoutFn 
      */
-    public layout(constructedData: ConstructedData, modelList: Model[], layoutFn: (element: { [ket: string]: Element[] }, layoutOptions: LayoutOptions) => void) {
-        const options: LayoutOptions = this.engine.layoutOptions;
-
+    public layout(container: Container, constructList: ConstructList, layoutFn: (elements: Element[], layoutOptions: LayoutOptions) => void) {
+        const options: LayoutOptions = this.engine.layoutOptions,
+              modelList: Model[] = [...constructList.element, ...constructList.pointer, ...constructList.link];
+        
         // 首先初始化所有节点的坐标为0，且设定旋转
         modelList.forEach(item => {
             item.G6Item = item.shadowG6Item;
-
-            if(item.modelType === 'element' || item.modelType === 'pointer') {
-                item.set('rotation', item.get('rotation'));
-                item.set({ x: 0, y: 0 });
-            }
         });
-
+        
+        // 初始化布局参数
+        this.initLayoutValue(constructList.element, constructList.pointer);
         // 布局节点
-        layoutFn.call(this.engine, constructedData.element, options);
-
+        layoutFn(constructList.element, options);
         // 布局外部指针
-        this.layoutPointer(constructedData.pointer);
+        this.layoutPointer(constructList.pointer);
 
         // 将视图调整到画布中心
-        options.fitCenter && this.fitCenter(modelList);
+        options.fitCenter && this.fitCenter(container, modelList);
 
         modelList.forEach(item => {
             item.G6Item = item.renderG6Item;
         });
     }
+
 }

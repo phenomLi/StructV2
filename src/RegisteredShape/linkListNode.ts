@@ -14,7 +14,7 @@ export default G6.registerNode('link-list-node', {
                 y: height / 2,
                 width: width,
                 height: height,
-                stroke: cfg.style.stroke,
+                stroke: cfg.style.stroke || '#333',
                 fill: '#eee'
             },
             name: 'wrapper'
@@ -27,7 +27,7 @@ export default G6.registerNode('link-list-node', {
                 width: width * (2 / 3),
                 height: height,
                 fill: cfg.style.fill,
-                stroke: cfg.style.stroke
+                stroke: cfg.style.stroke || '#333'
             },
             name: 'main-rect',
             draggable: true
@@ -58,7 +58,9 @@ export default G6.registerNode('link-list-node', {
             [0, 0.5],
             [5 / 6, 0.5],
             [5 / 6, 0],
-            [5 / 6, 1]
+            [5 / 6, 1],
+            [0.5, 0],
+            [0.5, 1]
         ];
     }
 });

@@ -107,7 +107,7 @@
 
 
     layout(elements, layoutOptions) {
-        let headNode = elements.head;
+        let headNode = elements.filter(item => item.type === 'head');
 
         for(let i = 0; i < headNode.length; i++) {
             let node = headNode[i],
@@ -128,9 +128,9 @@
 }
 
 
-const CHT = function(container) {
+const CHT = function(container, options) {
     return{
-        engine: new ChainHashTable(container),
+        engine: new ChainHashTable(container, options),
         data: [
             {
                 head: [{
@@ -153,7 +153,26 @@ const CHT = function(container) {
                 }]
             },
             {
-
+                head: [{
+                    id: 0,
+                    start: 'node#0'
+                }, {
+                    id: 2,
+                    start: 'node#2'
+                }, {
+                    id: 3,
+                    start: 'node#4'
+                }],
+                node: [{
+                    id: 0,
+                    next: 1
+                }, {
+                    id: 1
+                },{
+                    id: 2
+                },{
+                    id: 4
+                }]
             }
         ]
     } 

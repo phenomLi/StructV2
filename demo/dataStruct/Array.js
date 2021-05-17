@@ -8,7 +8,7 @@ class Arrays extends Engine {
         return {
             element: { 
                 default: {
-                    type: 'rect',
+                    type: 'indexed-node',
                     label: '[id]',
                     size: [60, 30],
                     style: {
@@ -31,27 +31,26 @@ class Arrays extends Engine {
         };
     }
 
-    layout(elements, layoutOptions) {
-        let arr = elements.default;
+    layout(elements) {
+        let arr = elements,
+            width = arr[0].get('size')[0];
 
         for(let i = 0; i < arr.length; i++) {
-            let width = arr[i].get('size')[0];
-
-            if(i > 0) {
-                arr[i].set('x', arr[i - 1].get('x') + width);
-            }
+            arr[i].set('x', i * width);
         }
     }
 } 
+
+
 
 
 const A = function(container) {
     return{
         engine: new Arrays(container),
         data: [[
-            { id: 1, external: 'A' },
-            { id: 2 },
-            { id: 3 },
+            { id: 1, index: 0 },
+            { id: 2, index: 1 },
+            { id: 3, index: 2 },
             { id: 4 },
             { id: 5 },
             { id: 6 },
@@ -66,7 +65,8 @@ const A = function(container) {
             { id: 3 },
             { id: 6, external: 'A' },
             { id: 7 }, 
-            { id: 8 }
+            { id: 8 },
+            { id: 12 }
         ]]
     } 
 };

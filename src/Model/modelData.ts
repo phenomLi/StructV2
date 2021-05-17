@@ -1,7 +1,7 @@
 import { Util } from "../Common/util";
 import { ElementLabelOption, ElementOption, LinkLabelOption, LinkOption, PointerOption, Style } from "../options";
 import { SourceElement } from "../sources";
-import { BoundingRect } from "../View/boundingRect";
+import { BoundingRect } from "../Common/boundingRect";
 import { SV } from './../StructV';
 
 
@@ -17,8 +17,8 @@ export interface G6NodeModel {
     style: Style;
     labelCfg: ElementLabelOption;
     externalPointerId: string; 
-    modelType: string;
-    modelName: string;
+    SVModelType: string;
+    SVModelName: string;
 };
 
 
@@ -27,29 +27,29 @@ export interface G6EdgeModel {
     source: string | number;
     target: string | number;
     type: string;
-    controlPoints: { x: number, y: number }[];
     curveOffset: number;
     sourceAnchor: number | ((index: number) => number);
     targetAnchor: number | ((index: number) => number);
     label: string;
     style: Style;
     labelCfg: LinkLabelOption;
+    SVModelType: string;
+    SVModelName: string;
 };
 
 
 export class Model {
     id: string;
-    modelName: string;
-    modelType: string;
-
+    type: string;
+    
     props: G6NodeModel | G6EdgeModel;
     shadowG6Item;
     renderG6Item;
     G6Item;
 
-    constructor(id: string, name: string) { 
+    constructor(id: string, type: string) { 
         this.id = id;
-        this.modelName = name;
+        this.type = type;
         this.shadowG6Item = null;
         this.renderG6Item = null;
         this.G6Item = null;
@@ -61,7 +61,7 @@ export class Model {
      * 定义 G6 model 的属性
      * @param option 
      */
-    protected defineProps(option: ElementOption | LinkOption | PointerOption): G6NodeModel | G6EdgeModel {
+    protected defineProps(option: ElementOption | LinkOption | PointerOption) {
         return null;
     }
 
@@ -77,9 +77,8 @@ export class Model {
      * 克隆 G6 model 的属性
      * @returns 
      */
-    cloneProps(): G6NodeModel | G6EdgeModel {
+    cloneProps() {
         return Util.objectClone(this.props);
-        // return this.props;
     }
 
     /**
@@ -150,21 +149,29 @@ export class Model {
      */
     getMatrix(): number[] {
         if(this.G6Item === null) return null;
-        // return this.G6Item.getContainer().getMatrix();
         const Mat3 = SV.G6.Util.mat3;
         return Mat3.create();
+    }
+
+    getType(): string {
+        return this.type;
     }
 }
 
 
 export class Element extends Model {
-    modelType = 'element';
     sourceElement: SourceElement;
     sourceId: string;
     free: boolean;
 
     constructor(id: string, type: string, sourceElement: SourceElement) {
         super(id, type);
+
+        if(type === null) {
+            return;
+        }
+
+        this.free = false;
 
         Object.keys(sourceElement).map(prop => {
             if(prop !== 'id') {
@@ -173,11 +180,12 @@ export class Element extends Model {
         });
 
         this.sourceId = this.id.split('.')[1];
-        this.free = false;
+        this.sourceElement = sourceElement;
     }
 
-    protected defineProps(option: ElementOption) {
+    protected defineProps(option: ElementOption): G6NodeModel {
         return {
+            ...this.sourceElement,
             id: this.id,
             x: 0,
             y: 0,
@@ -185,12 +193,12 @@ export class Element extends Model {
             type: option.type,
             size: option.size,
             anchorPoints: option.anchorPoint,
-            label: null,
+            label: option.label,
             style: Util.objectClone<Style>(option.style),
             labelCfg: Util.objectClone<ElementLabelOption>(option.labelOptions),
             externalPointerId: null,
-            modelType: this.modelType,
-            modelName: this.modelName
+            SVModelType: 'element',
+            SVModelName: this.type
         };
     }
 };
@@ -198,7 +206,6 @@ export class Element extends Model {
 
 
 export class Link extends Model { 
-    modelType = 'link';
     element: Element;
     target: Element;
     index: number;
@@ -211,7 +218,7 @@ export class Link extends Model {
     }
 
 
-    protected defineProps(option: LinkOption) {
+    protected defineProps(option: LinkOption): G6EdgeModel {
         let sourceAnchor = option.sourceAnchor, 
             targetAnchor = option.targetAnchor;
 
@@ -233,11 +240,9 @@ export class Link extends Model {
             label: option.label,
             style: Util.objectClone<Style>(option.style),
             labelCfg: Util.objectClone<LinkLabelOption>(option.labelOptions),
-            controlPoints: option.controlPoints,
             curveOffset: option.curveOffset,
-            modelType: this.modelType,
-            modelName: this.modelName,
-            zIndex: 20
+            SVModelType: 'link',
+            SVModelName: this.type
         };
     }
 };
@@ -245,7 +250,6 @@ export class Link extends Model {
 
 
 export class Pointer extends Model {
-    modelType = 'pointer';
     target: Element;
     label: string | string[];
 
@@ -254,11 +258,10 @@ export class Pointer extends Model {
         this.target = target;
         this.label = label;
 
-        this.target.set('externalPointerId', 
-        id);
+        this.target.set('externalPointerId', id);
     }
 
-    protected defineProps(option: ElementOption) {
+    protected defineProps(option: ElementOption): G6NodeModel {
         return {
             id: this.id,
             x: 0,
@@ -271,8 +274,8 @@ export class Pointer extends Model {
             style: Util.objectClone<Style>(option.style),
             labelCfg: Util.objectClone<ElementLabelOption>(option.labelOptions),
             externalPointerId: null,
-            modelType: this.modelType,
-            modelName: this.modelName
+            SVModelType: 'pointer',
+            SVModelName: this.type
         };
     }
 };

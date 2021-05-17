@@ -1,6 +1,6 @@
-import { Util } from "../Common/util";
-import { BoundingRect, Bound } from "../View/boundingRect";
-import { Vector } from "../Common/vector";
+import { Util } from "./util";
+import { BoundingRect, Bound } from "./boundingRect";
+import { Vector } from "./vector";
 import { Element } from "../Model/modelData";
 
 
