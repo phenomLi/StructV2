@@ -95,6 +95,8 @@ import { Container } from "./container";
      */
     protected afterInitRenderer() {
         let g6Instance = this.getG6Instance(),
+            pointer = null,
+            pointerX = null,
             pointerY = null,
             dragStartX = null,
             dragStartY = null;
