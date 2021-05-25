@@ -1,13 +1,14 @@
 import { Engine } from "../engine";
-import { Element, Link } from "../Model/modelData";
-import { EngineInitOptions, LayoutOptions } from "../options";
+import { Element, Link, Model } from "../Model/modelData";
+import { EngineOptions } from "../options";
 import { Container } from "./container/container";
 import { SV } from '../StructV';
-import { ConstructList } from "../Model/modelConstructor";
 import { MainContainer } from "./container/main";
 import { FreedContainer } from "./container/freed";
 import { LeakContainer } from "./container/leak";
 import { Layouter } from "./layouter";
+import { LayoutGroup, LayoutGroupTable } from "../Model/modelConstructor";
+import { Util } from "../Common/util";
 
 
 export class ViewManager {
@@ -17,9 +18,7 @@ export class ViewManager {
     private freedContainer: Container;
     private leakContainer: Container;
 
-    private prevConstructList: ConstructList = { element:[], pointer: [], link: [] };
-    private freedConstructList: ConstructList = { element:[], pointer: [], link: [] };
-    private leakConstructList: ConstructList = { element:[], pointer: [], link: [] };
+    private prevLayoutGroupTable: LayoutGroupTable;
 
     private shadowG6Instance;
 
@@ -27,8 +26,9 @@ export class ViewManager {
         this.engine = engine;
         this.layouter = new Layouter(engine);
         this.mainContainer = new MainContainer(engine, DOMContainer);
+        this.prevLayoutGroupTable = null;
 
-        const options: EngineInitOptions = this.engine.initOptions;
+        const options: EngineOptions = this.engine.engineOptions;
 
         if(options.freedContainer) {
             this.freedContainer = new FreedContainer(engine, options.freedContainer, { fitCenter: true });
@@ -47,38 +47,49 @@ export class ViewManager {
      * 对每一个 model 在离屏 Canvas 上构建 G6 item，用作布局
      * @param constructList
      */
-    private build(constructList: ConstructList) {
-        constructList.element.map(item => item.cloneProps()).forEach(item => this.shadowG6Instance.addItem('node', item));
-        constructList.pointer.map(item => item.cloneProps()).forEach(item => this.shadowG6Instance.addItem('node', item));
-        constructList.link.map(item => item.cloneProps()).forEach(item => this.shadowG6Instance.addItem('edge', item));
-        
-        constructList.element.forEach(item => {
-            item.shadowG6Item = this.shadowG6Instance.findById(item.id);
-        });
-        constructList.pointer.forEach(item => {
-            item.shadowG6Item = this.shadowG6Instance.findById(item.id);
-        });
-        constructList.link.forEach(item => {
-            item.shadowG6Item = this.shadowG6Instance.findById(item.id);
+    private build(layoutGroupTable: LayoutGroupTable) {
+        layoutGroupTable.forEach(group => {
+            group.element.map(item => item.cloneProps()).forEach(item => this.shadowG6Instance.addItem('node', item));
+            group.pointer.map(item => item.cloneProps()).forEach(item => this.shadowG6Instance.addItem('node', item));
+            group.link.map(item => item.cloneProps()).forEach(item => this.shadowG6Instance.addItem('edge', item));
+            
+            group.element.forEach(item => {
+                item.shadowG6Item = this.shadowG6Instance.findById(item.id);
+            });
+            group.pointer.forEach(item => {
+                item.shadowG6Item = this.shadowG6Instance.findById(item.id);
+            });
+            group.link.forEach(item => {
+                item.shadowG6Item = this.shadowG6Instance.findById(item.id);
+            });
         });
     }
 
     /**
      * 获取被 free 的节点
-     * @param constructList 
+     * @param layoutGroupTable 
      * @returns 
      */
-    private getFreedConstructList(constructList: ConstructList): ConstructList {
-        const freedList: ConstructList = {
-            element: constructList.element.filter(item => item.free),
-            pointer: [],
-            link: []
-        };
+    private getFreedConstructList(layoutGroupTable: LayoutGroupTable): Model[] {
+        let freedList: Model[] = [],
+            freedGroup = null,
+            freedGroupName = null;
 
-        freedList.element.forEach(fItem => {
-            constructList.element.splice(constructList.element.findIndex(item => item.id === fItem.id), 1);
-            constructList.link.splice(constructList.link.findIndex(item => item.element.id === fItem.id || item.target.id === fItem.id));
-            constructList.pointer.splice(constructList.pointer.findIndex(item => item.target.id === fItem.id));
+        for(let group in layoutGroupTable) {
+            let freedElements: Model[] = layoutGroupTable[group].element.filter(item => item.freed);
+
+            if(freedElements.length) {
+                freedGroupName = group;
+                break;
+            }
+        }
+
+        freedGroup = layoutGroupTable[freedGroupName];
+
+        freedList.forEach(fItem => {
+            freedGroup.element.splice(freedGroup.element.findIndex(item => item.id === fItem.id), 1);
+            freedGroup.link.splice(freedGroup.link.findIndex(item => item.element.id === fItem.id || item.target.id === fItem.id));
+            freedGroup.pointer.splice(freedGroup.pointer.findIndex(item => item.target.id === fItem.id));
         });
 
         return freedList;
@@ -90,47 +101,63 @@ export class ViewManager {
      * @param prevConstructList
      * @returns 
      */
-    private getLeakConstructList(prevConstructList: ConstructList, constructList: ConstructList): ConstructList {
-        const elements: Element[] = prevConstructList.element.filter(item => !constructList.element.find(n => n.id === item.id)),
-              links: Link[] = prevConstructList.link.filter(item => !constructList.link.find(n => n.id === item.id)),
-              elementIds: string[] = elements.map(item => item.id);
+    private getLeakConstructList(prevLayoutGroupTable: LayoutGroupTable, layoutGroupTable: LayoutGroupTable): LayoutGroupTable {
+        const leakLayoutGroupTable = new Map<string, LayoutGroup>();
 
-        elements.forEach(item => {
-            item.set('style', {
-                fill: '#ccc'
+        prevLayoutGroupTable.forEach((item, groupName) => {
+            let prevGroup = item,
+                curGroup = layoutGroupTable.get(groupName),
+                elements: Element[] = [],
+                links: Link[] = [],
+                elementIds: string[] = [];
+
+            if(curGroup) {
+                elements = prevGroup.element.filter(item => !curGroup.element.find(n => n.id === item.id)).filter(item => item.freed === false),
+                links = prevGroup.link.filter(item => !curGroup.link.find(n => n.id === item.id)),
+                elementIds = elements.map(item => item.id);
+            }
+
+            elements.forEach(item => {
+                item.set('style', {
+                    fill: '#ccc'
+                });
+            });
+    
+            for(let i = 0; i < links.length; i++) {
+                let sourceId = links[i].element.id,
+                    targetId = links[i].target.id;
+    
+                links[i].set('style', {
+                    stroke: '#333'
+                });
+    
+                if(elementIds.find(item => item === sourceId) === undefined || elementIds.find(item => item === targetId) === undefined) {
+                    links.splice(i, 1);
+                    i--;
+                }
+            }
+
+            leakLayoutGroupTable.set(groupName, {
+                element: elements,
+                link: links,
+                pointer: [],
+                layouter: prevGroup.layouter,
+                options: prevGroup.options,
+                modelList: [...elements, ...links]
             });
         });
 
-        for(let i = 0; i < links.length; i++) {
-            let sourceId = links[i].element.id,
-                targetId = links[i].target.id;
-
-            links[i].set('style', {
-                stroke: '#333'
-            });
-
-            if(elementIds.find(item => item === sourceId) === undefined || elementIds.find(item => item === targetId) === undefined) {
-                links.splice(i, 1);
-                i--;
-            }
-        }
-
-        return {
-            element: elements,
-            link: links,
-            pointer: []
-        };
+        return leakLayoutGroupTable;
     }
 
     // ----------------------------------------------------------------------------------------------
 
     /**
      * 对主视图进行重新布局
-     * @param constructList
-     * @param layoutFn 
+     * @param layoutGroupTable
      */
-    reLayout(constructList: ConstructList, layoutFn: (elements: Element[], layoutOptions: LayoutOptions) => void) {
-        this.layouter.layout(this.mainContainer, constructList, layoutFn);
+    reLayout(layoutGroupTable: LayoutGroupTable) {
+        this.layouter.layoutAll(this.mainContainer, layoutGroupTable);
     }
 
 
@@ -150,11 +177,23 @@ export class ViewManager {
 
     /**
      * 重新调整容器尺寸
+     * @param containerName
      * @param width 
      * @param height 
      */
-    resize(width: number, height: number) {
-        this.mainContainer.getG6Instance().changeSize(width, height);
+    resize(containerName: string, width: number, height: number) {
+        if(containerName === 'main') {
+            this.mainContainer.getG6Instance().changeSize(width, height);
+        }
+
+        if(containerName === 'freed') {
+            this.freedContainer.getG6Instance().changeSize(width, height);
+        }
+
+        if(containerName === 'leak') {
+            this.leakContainer.getG6Instance().changeSize(width, height);
+        }
+        
     }
 
     /**
@@ -162,31 +201,36 @@ export class ViewManager {
      * @param models 
      * @param layoutFn 
      */
-    renderAll(constructList: ConstructList, layoutFn: (elements: Element[], layoutOptions: LayoutOptions) => void) {
+    renderAll(layoutGroupTable: LayoutGroupTable) {
         this.shadowG6Instance.clear();
 
-        this.build(constructList);
+        this.build(layoutGroupTable);
 
-        this.freedConstructList = this.getFreedConstructList(constructList);
-        this.leakConstructList = this.getLeakConstructList(this.prevConstructList, constructList);
-
-        this.build(this.leakConstructList);
+        let freedList = this.getFreedConstructList(layoutGroupTable),
+            leakLayoutGroupTable = null;
+        
+        if(this.leakContainer && this.prevLayoutGroupTable) {
+            leakLayoutGroupTable = this.getLeakConstructList(this.prevLayoutGroupTable, layoutGroupTable);
+            this.build(leakLayoutGroupTable);
+        }
 
         if(this.freedContainer) {
-            this.freedContainer.render(this.freedConstructList, layoutFn);
+            this.freedContainer.render(freedList);
         }
 
         // 进行布局（设置model的x，y）
-        this.layouter.layout(this.mainContainer, constructList, layoutFn);
-        this.mainContainer.render(constructList, layoutFn);
+        this.layouter.layoutAll(this.mainContainer, layoutGroupTable);
 
-        if(this.leakContainer) {
+        const modelList: Model[] = Util.convertGroupTable2ModelList(layoutGroupTable);
+        this.mainContainer.render(modelList);
+
+        if(this.leakContainer && this.prevLayoutGroupTable) {
             this.mainContainer.afterRemoveModels(() => {
-                this.leakContainer.render(this.leakConstructList, layoutFn);
+                this.leakContainer.render(Util.convertGroupTable2ModelList(leakLayoutGroupTable));
             });
         }
 
-        this.prevConstructList = constructList;
+        this.prevLayoutGroupTable = layoutGroupTable;
     }   
 
     /**

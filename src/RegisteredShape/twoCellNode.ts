@@ -44,7 +44,8 @@ export default G6.registerNode('two-cell-node', {
                     textBaseline: 'middle',
                     text: cfg.label,
                     fill: style.fill || '#000',
-                    fontSize: style.fontSize || 16
+                    fontSize: style.fontSize || 16,
+                    cursor: cfg.style.cursor,
                 },
                 name: 'text',
                 draggable: true

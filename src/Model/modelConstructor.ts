@@ -1,58 +1,120 @@
 import { Util } from "../Common/util";
 import { Engine } from "../engine";
-import { LinkOption, PointerOption } from "../options";
-import { sourceLinkData, SourceElement, LinkTarget } from "../sources";
-import { Element, Link, Pointer } from "./modelData";
+import { ElementOption, Layouter, LayoutGroupOptions, LinkOption, PointerOption } from "../options";
+import { sourceLinkData, SourceElement, LinkTarget, Sources } from "../sources";
+import { SV } from "../StructV";
+import { Element, Link, Model, Pointer } from "./modelData";
 
 
-export interface ConstructList {
+export type LayoutGroup = { 
     element: Element[];
     link: Link[];
     pointer: Pointer[];
+    layouter: Layouter;
+    options: LayoutGroupOptions;
+    modelList: Model[];
 };
+
+
+export type LayoutGroupTable = Map<string, LayoutGroup>;
 
 
 export class ModelConstructor {
     private engine: Engine;
-    private constructList: ConstructList;
+    private layoutGroupTable: LayoutGroupTable;
+    private prevSourcesStringMap: { [key: string]: string };   // 保存上一次源数据转换为字符串之后的值，用作比较该次源数据和上一次源数据是否有差异，若相同，则可跳过重复构建过程
 
     constructor(engine: Engine) {
         this.engine = engine;
+        this.prevSourcesStringMap = { };
     }
 
     /**
      * 构建element，link和pointer
      * @param sourceList 
      */
-    public construct(sourceList: SourceElement[]): ConstructList {
-        let elementContainer = this.constructElements(sourceList),
-            linkContainer = this.constructLinks(this.engine.linkOptions, elementContainer),
-            pointerContainer = this.constructPointers(this.engine.pointerOptions, elementContainer);
-        
-        this.constructList = { 
-            element: Util.converterList(elementContainer),
-            link: Util.converterList(linkContainer),
-            pointer: Util.converterList(pointerContainer)
-        };
+    public construct(sources: Sources): LayoutGroupTable {
+        const layoutGroupTable = new Map<string, LayoutGroup>(),
+              layouterMap: { [key: string]: Layouter } = SV.registeredLayouter,
+              optionsTable = this.engine.optionsTable;
 
-        return this.constructList;
+        Object.keys(sources).forEach(name => {
+            let sourceGroup = sources[name],
+                layouterName = sourceGroup.layouter;
+
+            if(!layouterName) {
+                layoutGroupTable.set(name, {
+                    element: [],
+                    link: [],
+                    pointer: [],
+                    options: null,
+                    layouter: null,
+                    modelList: []
+                });
+
+                return;
+            }
+
+            let sourceDataString: string = JSON.stringify(sourceGroup.data),
+                prevString: string = this.prevSourcesStringMap[name],
+                layouter: Layouter = null,
+                options: LayoutGroupOptions = null,
+                elementList: Element[] = [],
+                pointerList: Pointer[] = [];
+
+            if(prevString === sourceDataString) {
+                return;
+            }
+        
+            layouter = layouterMap[sourceGroup.layouter];
+            options = optionsTable[layouterName];
+
+            const sourceData = layouter.sourcesPreprocess? layouter.sourcesPreprocess(sourceGroup.data): sourceGroup.data;
+                
+            elementList = this.constructElements(options.element, name, sourceData, layouterName);
+            pointerList = this.constructPointers(options.pointer, elementList);
+            
+            layoutGroupTable.set(name, {
+                element: elementList,
+                link: [],
+                pointer: pointerList,
+                options: options,
+                layouter: layouter,
+                modelList: [...elementList, ...pointerList]
+            });
+        });
+        
+        layoutGroupTable.forEach((layoutGroup: LayoutGroup) => {
+            const linkList: Link[] = this.constructLinks(layoutGroup.options.link, layoutGroup.element, layoutGroupTable);
+
+            layoutGroup.link = linkList;
+            layoutGroup.modelList.push(...linkList);
+        });
+
+        this.layoutGroupTable = layoutGroupTable;
+
+        return this.layoutGroupTable;
     }
 
     /**
      * 
      * @returns 
      */
-    public getConstructList(): ConstructList {
-        return this.constructList;
+    public getLayoutGroupTable(): LayoutGroupTable {
+        return this.layoutGroupTable;
     }
 
     /**
      * 从源数据构建 element 集
-     * @param sourceList
+     * @param elementOptions 
+     * @param groupName 
+     * @param sourceList 
+     * @param layouterName
+     * @returns 
      */
-    private constructElements(sourceList: SourceElement[]): { [key: string]: Element[] } {
+    private constructElements(elementOptions: { [key: string]: ElementOption }, groupName: string, sourceList: SourceElement[], layouterName: string): Element[] {
         let defaultElementType: string = 'default',
-            elementContainer: { [key: string]: Element[] } = { };
+            elementList: Element[] = [];
 
         sourceList.forEach(item => {
             if(item === null) {
@@ -63,37 +125,26 @@ export class ModelConstructor {
                 item.type = defaultElementType;
             }
 
-            if(elementContainer[item.type] === undefined) {
-                elementContainer[item.type] = [];
-            }
-
-            elementContainer[item.type].push(this.createElement(item, item.type));
+            elementList.push(this.createElement(item, item.type, groupName, layouterName, elementOptions[item.type]));
         });
 
-        return elementContainer;
+        return elementList;
     }
 
     /**
      * 从配置和 element 集构建 link 集
      * @param linkOptions 
-     * @param elementContainer 
+     * @param elements 
+     * @param layoutGroupTable
      * @returns 
      */
-    private constructLinks(linkOptions: { [key: string]: LinkOption }, elementContainer: { [key: string]: Element[] }): { [key: string]: Link[] } {
-        let linkContainer: { [key: string]: Link[] } = { },
-            elementList: Element[] = Object
-                .keys(elementContainer)
-                .map(item => elementContainer[item])
-                .reduce((prev, cur) => [...prev, ...cur]),
+    private constructLinks(linkOptions: { [key: string]: LinkOption }, elements: Element[], layoutGroupTable: LayoutGroupTable): Link[] {
+        let linkList: Link[] = [],
             linkNames = Object.keys(linkOptions);
 
         linkNames.forEach(name => {
-            linkContainer[name] = [];
-        });
-
-        linkNames.forEach(name => {
-            for(let i = 0; i < elementList.length; i++) {
-                let element: Element = elementList[i],
+            for(let i = 0; i < elements.length; i++) {
+                let element: Element = elements[i],
                     sourceLinkData: sourceLinkData = element.sourceElement[name],
                     targetElement: Element | Element[] = null,
                     link: Link = null;
@@ -106,22 +157,22 @@ export class ModelConstructor {
                 //  ------------------- 将连接声明字段 sourceLinkData 从 id 变为 Element -------------------
                 if(Array.isArray(sourceLinkData)) {
                     element[name] = sourceLinkData.map((item, index) => {
-                        targetElement = this.fetchTargetElements(elementContainer, element, item);
+                        targetElement = this.fetchTargetElements(layoutGroupTable, element, item);
 
                         if(targetElement) {
-                            link = this.createLink(name, element, targetElement, index);
-                            linkContainer[name].push(link);
+                            link = this.createLink(name, element, targetElement, index, linkOptions[name]);
+                            linkList.push(link);
                         }
 
                         return targetElement;
                     });
                 }
                 else {
-                    targetElement = this.fetchTargetElements(elementContainer, element, sourceLinkData);
+                    targetElement = this.fetchTargetElements(layoutGroupTable, element, sourceLinkData);
 
                     if(targetElement) {
-                        link = this.createLink(name, element, targetElement, null);
-                        linkContainer[name].push(link);
+                        link = this.createLink(name, element, targetElement, null, linkOptions[name]);
+                        linkList.push(link);
                     }
 
                     element[name] = targetElement;
@@ -129,64 +180,57 @@ export class ModelConstructor {
             }
         });
 
-        return linkContainer;
+        return linkList;
     }
 
     /**
      * 从配置和 element 集构建 pointer 集
      * @param pointerOptions 
-     * @param elementContainer 
+     * @param elements
      * @returns 
      */
-    private constructPointers(pointerOptions: { [key: string]: PointerOption }, elementContainer: { [key: string]: Element[] }): { [key: string]: Pointer[] } {
-        let pointerContainer: { [key: string]: Pointer[] } = { },
-            elementList: Element[] = Object
-                .keys(elementContainer)
-                .map(item => elementContainer[item])
-                .reduce((prev, cur) => [...prev, ...cur]),
+    private constructPointers(pointerOptions: { [key: string]: PointerOption }, elements: Element[]): Pointer[] {
+        let pointerList: Pointer[] = [],
             pointerNames = Object.keys(pointerOptions);
 
         pointerNames.forEach(name => {
-            pointerContainer[name] = [];
-        });
-
-        pointerNames.forEach(name => {
             
-
-            for(let i = 0; i < elementList.length; i++) {
-                let element = elementList[i],
+            for(let i = 0; i < elements.length; i++) {
+                let element = elements[i],
                     pointerData = element[name];
                 
                 // 若没有指针字段的结点则跳过
                 if(!pointerData) continue;
 
                 let id = name + '.' + (Array.isArray(pointerData)? pointerData.join('-'): pointerData),
-                    pointer = this.createPointer(id, name, pointerData, element);
+                    pointer = this.createPointer(id, name, pointerData, element, pointerOptions[name]);
 
-                pointerContainer[name].push(pointer);
+                pointerList.push(pointer);
             }
         });
 
-        return pointerContainer;
+        return pointerList;
     }
 
     /**
      * 元素工厂，创建Element
      * @param sourceElement
      * @param elementName
+     * @param groupName
+     * @param layouterName
+     * @param options
      */
-    private createElement(sourceElement: SourceElement, elementName: string): Element {
-        let elementOption = this.engine.elementOptions[elementName],
-            element: Element = undefined,
-            label = elementOption.label? this.parserElementContent(sourceElement, elementOption.label): '',
+    private createElement(sourceElement: SourceElement, elementName: string, groupName: string, layouterName: string, options: ElementOption): Element {
+        let element: Element = undefined,
+            label = options.label? this.parserElementContent(sourceElement, options.label): '',
             id =  elementName + '.' + sourceElement.id.toString();
 
         if(label === null || label === 'undefined') {
             label = '';
         }
 
-        element = new Element(id, elementName, sourceElement);
-        element.initProps(elementOption);
+        element = new Element(id, elementName, groupName, layouterName, sourceElement);
+        element.initProps(options);
         element.set('label', label);
         element.sourceElement = sourceElement;
 
@@ -199,10 +243,10 @@ export class ModelConstructor {
      * @param pointerName 
      * @param label 
      * @param target 
+     * @param options
      */
-    private createPointer(id: string, pointerName: string, pointerData: string | string[], target: Element): Pointer {
-        let options = this.engine.pointerOptions[pointerName],
-            pointer = undefined;
+    private createPointer(id: string, pointerName: string, pointerData: string | string[], target: Element, options: PointerOption): Pointer {
+        let pointer = undefined;
 
         pointer = new Pointer(id, pointerName, pointerData, target);
         pointer.initProps(options);
@@ -216,10 +260,10 @@ export class ModelConstructor {
      * @param element 
      * @param target 
      * @param index 
+     * @param options
      */
-    private createLink(linkName: string, element: Element, target: Element, index: number): Link {
-        let options: LinkOption = this.engine.linkOptions[linkName],
-            link = undefined,
+    private createLink(linkName: string, element: Element, target: Element, index: number, options: LinkOption): Link {
+        let link = undefined,
             id = `${element.id}-${target.id}`;
         
         link = new Link(id, linkName, element, target, index);
@@ -233,7 +277,7 @@ export class ModelConstructor {
      * @param sourceElement
      * @param formatLabel
      */
-     private parserElementContent(sourceElement: SourceElement, formatLabel: string): string {
+    private parserElementContent(sourceElement: SourceElement, formatLabel: string): string {
         let fields = Util.textParser(formatLabel);
         
         if(Array.isArray(fields)) {
@@ -253,31 +297,44 @@ export class ModelConstructor {
      * @param element
      * @param linkTarget 
      */
-    private fetchTargetElements(
-        elementContainer: { [key: string]: Element[] } , 
-        element: Element, 
-        linkTarget: LinkTarget
-    ): Element {
-        let elementName = element.getType(),
+    private fetchTargetElements(layoutGroupTable: LayoutGroupTable, element: Element, linkTarget: LinkTarget): Element {
+        let groupName: string = element.groupName,
+            elementName = element.type,
             elementList: Element[], 
             targetId = linkTarget,
+            targetGroupName = groupName,
             targetElement = null;
 
         if(linkTarget === null || linkTarget === undefined) {
             return null;
         }
 
-        if(typeof linkTarget === 'string' && linkTarget.includes('#')) {
-            let info = linkTarget.split('#');
-            elementName = info[0];
-            targetId = info[1];
+        if(typeof linkTarget === 'number' || (typeof linkTarget === 'string' && !linkTarget.includes('#'))) {
+            linkTarget = 'default#' + linkTarget;
         }
 
-        if(typeof targetId === 'number') {
-            targetId = targetId.toString();
+        let info = linkTarget.split('#');
+
+        targetId = info.pop();
+
+        if(info.length > 1) {
+            elementName = info.pop();
+            targetGroupName = info.pop();
+        }
+        else {
+            let field = info.pop();
+            if(layoutGroupTable.get(targetGroupName).element.find(item => item.type === field)) {
+                elementName = field;
+            }
+            else if(layoutGroupTable.has(field)) {
+                targetGroupName = field;
+            }
+            else {
+                return null;
+            }
         }
         
-        elementList = elementContainer[elementName];
+        elementList = layoutGroupTable.get(targetGroupName).element.filter(item => item.type === elementName);
 
         // 若目标element不存在，返回null
         if(elementList === undefined) {
@@ -292,6 +349,6 @@ export class ModelConstructor {
      * 销毁
      */
     destroy() {
-        this.constructList = null;
+        this.layoutGroupTable = null;
     }
 };

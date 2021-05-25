@@ -86,13 +86,14 @@ export class Renderer {
             this.g6Instance.changeData(renderData);
         }
 
-        if(this.engine.layoutOptions.fitView) {
+        if(this.engine.viewOptions.fitView) {
             this.g6Instance.fitView();
         }
 
         modelList.forEach(item => {
             item.renderG6Item = this.g6Instance.findById(item.id);
             item.G6Item = item.renderG6Item;
+            item.renderG6Item.SVModel = item;
         });
 
         // 把所有连线置顶

@@ -15,4 +15,9 @@ export interface SourceElement {
 }
 
 
+export type Sources = {
+    [key: string]: { data: SourceElement[]; layouter: string; }
+};
+    
+
 

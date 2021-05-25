@@ -82,6 +82,8 @@ const Engine = SV.Engine,
 <script src="./dataStruct/GeneralizedList.js"></script>
 <script>
 
+
+
 const engines = {
     0: BTree, 
     1: LList, 
@@ -98,7 +100,7 @@ const engines = {
 
 let dataCounter = 0;
 
-let cur = engines[3](document.getElementById('container'), { 
+let cur = engines[1](document.getElementById('container'), { 
     freedContainer: document.getElementById('freed'),
     leakContainer: document.getElementById('leak')
 });
@@ -113,12 +115,9 @@ document.getElementById('btn-next').addEventListener('click', e => {
     cur.engine.reLayout();
 });
 
-document.getElementById('btn-set').addEventListener('click', e => {
-    let els = cur.engine.getElements();
 
-    els.map(item => {
-        item.set('style', { fill: 'red' });
-    });
+cur.engine.on('node:mouseover', evt => {
+    console.log(evt);
 });
 
 

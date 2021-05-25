@@ -238,6 +238,15 @@ const data = {
     node: []
 }
 
+let d = [
+    { id: 10, type: 'head', name: 'QPtr', label: 'front', external: ['lq'], front: 0 },
+    { id: 11, type: 'head', name: 'QPtr', label: 'rear', external: null, rear: 2 },
+    { id: 0, next: 1 },
+    { id: 1, next: 2 },
+    { id: 2 }
+];
+
+
 
 const LQueue = function(container) {
     return{

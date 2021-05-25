@@ -1,3 +1,5 @@
+import { Element } from "./Model/modelData";
+import { SourceElement } from "./sources";
 
 
 export interface Style {
@@ -59,10 +61,36 @@ export interface PointerOption extends ElementOption {
 
 
 export interface LayoutOptions {
-    fitCenter: boolean;
-    fitView: boolean;
     [key: string]: any;
 };
+
+
+export interface BehaviorOptions {
+    dragNode: boolean | string[];
+    selectNode: boolean | string[];
+};
+
+
+export interface LayoutGroupOptions {
+    element: { [key: string]: ElementOption };
+    link?: { [key: string]: LinkOption }
+    pointer?: { [key: string]: PointerOption };
+    layout?: LayoutOptions;
+    behavior?: BehaviorOptions;
+};
+
+
+/**
+ * ---------------------------------------------------------------------------------------------------------------------------------------------
+ * -------------------------------------------------------------------------------------------------------------------------------------------
+ * ------------------------------------------------------------------------------------------------------------------------
+ */
+
+export interface ViewOptions {
+    fitCenter: boolean;
+    fitView: boolean;
+    groupPadding: number;
+}
 
 
 export interface AnimationOptions {
@@ -73,29 +101,24 @@ export interface AnimationOptions {
 
 
 export interface InteractionOptions {
+    changeHighlight: string;
     drag: boolean;
     zoom: boolean;
-    dragNode: boolean | string[];
-    selectNode: boolean | string[];
-    changeHighlight: string;
-};
+}
 
-
-export interface Options {
-    element: { [key: string]: ElementOption };
-    link?: { [key: string]: LinkOption }
-    pointer?: { [key: string]: PointerOption };
-    layout?: LayoutOptions;
+export interface EngineOptions {
+    freedContainer?: HTMLElement;
+    leakContainer?: HTMLElement;
+    view?: ViewOptions;
     animation?: AnimationOptions;
     interaction?: InteractionOptions;
 };
 
 
-export interface EngineInitOptions {
-    freedContainer?: HTMLElement;
-    leakContainer?: HTMLElement;
-};
-
-
-
+export interface Layouter {
+    defineOptions(): LayoutGroupOptions;
+    sourcesPreprocess?(sources: SourceElement[]): SourceElement[];
+    layout(elements: Element[], layoutOptions: LayoutOptions);
+    [key: string]: Function;
+}
 

@@ -16,7 +16,8 @@ export default G6.registerNode('indexed-node', {
                 width: width,
                 height: height,
                 stroke: cfg.style.stroke || '#333',
-                fill: disable? '#ccc': cfg.style.fill 
+                fill: disable? '#ccc': cfg.style.fill,
+                cursor: cfg.style.cursor, 
             },
             name: 'wrapper'
         });

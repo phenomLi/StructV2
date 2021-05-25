@@ -17,6 +17,7 @@ export interface G6NodeModel {
     style: Style;
     labelCfg: ElementLabelOption;
     externalPointerId: string; 
+    SVLayouter: string;
     SVModelType: string;
     SVModelName: string;
 };
@@ -156,22 +157,30 @@ export class Model {
     getType(): string {
         return this.type;
     }
+
+    getId(): string {
+        return this.id;
+    }
 }
 
 
 export class Element extends Model {
     sourceElement: SourceElement;
     sourceId: string;
-    free: boolean;
+    groupName: string;
+    layouterName: string;
+    freed: boolean;
 
-    constructor(id: string, type: string, sourceElement: SourceElement) {
+    constructor(id: string, type: string, group: string, layouter: string, sourceElement: SourceElement) {
         super(id, type);
 
         if(type === null) {
             return;
         }
 
-        this.free = false;
+        this.groupName = group;
+        this.layouterName = layouter;
+        this.freed = false;
 
         Object.keys(sourceElement).map(prop => {
             if(prop !== 'id') {
@@ -197,6 +206,7 @@ export class Element extends Model {
             style: Util.objectClone<Style>(option.style),
             labelCfg: Util.objectClone<ElementLabelOption>(option.labelOptions),
             externalPointerId: null,
+            SVLayouter: this.layouterName,
             SVModelType: 'element',
             SVModelName: this.type
         };
@@ -274,6 +284,7 @@ export class Pointer extends Model {
             style: Util.objectClone<Style>(option.style),
             labelCfg: Util.objectClone<ElementLabelOption>(option.labelOptions),
             externalPointerId: null,
+            SVLayouter: null,
             SVModelType: 'pointer',
             SVModelName: this.type
         };

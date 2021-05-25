@@ -1,4 +1,4 @@
-import { ConstructList } from "../Model/modelConstructor";
+import { LayoutGroup, LayoutGroupTable } from "../Model/modelConstructor";
 import { G6EdgeModel, G6NodeModel, Link, Model } from "../Model/modelData";
 import { SV } from "../StructV";
 import { G6Data } from "../View/renderer";
@@ -78,21 +78,27 @@ export const Util = {
 
     /**
      * 
-     * @param constructListType
+     * @param groupTable 
      * @returns 
      */
-     converterList(modelContainer: { [key: string]: ConstructList[keyof ConstructList]}) {
-        return [].concat(...Object.keys(modelContainer).map(item => modelContainer[item]));
+    convertGroupTable2ModelList(groupTable: LayoutGroupTable): Model[] {
+        const list: Model[] = [];
+
+        groupTable.forEach(item => {
+            list.push(...item.modelList);
+        });
+
+        return list;
     },
 
     /**
      * G6 data 转换器
-     * @param constructList 
+     * @param layoutGroup 
      * @returns 
      */
-    convertG6Data(constructList: ConstructList): G6Data {
-        let nodes = [...constructList.element, ...constructList.pointer],
-            edges = constructList.link;
+    convertG6Data(layoutGroup: LayoutGroup): G6Data {
+        let nodes = [...layoutGroup.element, ...layoutGroup.pointer],
+            edges = layoutGroup.link;
 
         return { 
             nodes: nodes.map(item => item.cloneProps()) as G6NodeModel[], 

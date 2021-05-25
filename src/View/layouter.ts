@@ -1,16 +1,19 @@
 import { Bound, BoundingRect } from '../Common/boundingRect';
+import { Group } from '../Common/group';
 import { Engine } from '../engine';
-import { ConstructList } from '../Model/modelConstructor';
+import { LayoutGroupTable } from '../Model/modelConstructor';
 import { Element, Model, Pointer } from '../Model/modelData';
-import { LayoutOptions, PointerOption } from '../options';
+import { LayoutOptions, PointerOption, ViewOptions } from '../options';
 import { Container } from './container/container';
 
 
 export class Layouter {
-    private engine: Engine;
+    private engine: Engine; 
+    private viewOptions: ViewOptions;
 
     constructor(engine: Engine) {
         this.engine = engine;
+        this.viewOptions = this.engine.viewOptions;
     }
 
 
@@ -19,7 +22,7 @@ export class Layouter {
      * @param elements 
      * @param pointers 
      */
-     private initLayoutValue(elements: Element[], pointers: Pointer[]) {
+    private initLayoutValue(elements: Element[], pointers: Pointer[]) {
         [...elements, ...pointers].forEach(item => {
             item.set('rotation', item.get('rotation'));
             item.set({ x: 0, y: 0 });
@@ -29,10 +32,11 @@ export class Layouter {
     /**
      * 布局外部指针
      * @param pointer 
+     * @param pointerOptions
      */
-    private layoutPointer(pointers: Pointer[]) {
+    private layoutPointer(pointers: Pointer[], pointerOptions: { [key: string]: PointerOption }) {
         pointers.forEach(item => {
-            const options: PointerOption = this.engine.pointerOptions[item.getType()],
+            const options: PointerOption = pointerOptions[item.getType()],
                   offset = options.offset || 8,
                   anchor = options.anchor || 0;
 
@@ -52,56 +56,117 @@ export class Layouter {
      * @param container
      * @param models
      */
-     private fitCenter(container: Container, models: Model[]) {
-        if(models.length === 0) {
-            return;
-        }   
-
-        const viewBound: BoundingRect = models.map(item => item.getBound()).reduce((prev, cur) => Bound.union(prev, cur));
-
+     private fitCenter(container: Container, group: Group) {
         let width = container.getG6Instance().getWidth(),
             height = container.getG6Instance().getHeight(),
+            viewBound: BoundingRect = group.getBound(),
             centerX = width / 2, centerY = height / 2,
             boundCenterX = viewBound.x + viewBound.width / 2,
             boundCenterY = viewBound.y + viewBound.height / 2,
             dx = centerX - boundCenterX,
             dy = centerY - boundCenterY;
 
-        models.forEach(item => {
-            item.set({
-                x: item.get('x') + dx,
-                y: item.get('y') + dy
-            });
-        });
+        group.translate(dx, dy);
     }
 
     /**
-     * 进行布局
-     * @param container 
-     * @param constructList 
-     * @param layoutFn 
+     * 对每个组内部的model进行布局
+     * @param layoutGroupTable
      */
-    public layout(container: Container, constructList: ConstructList, layoutFn: (elements: Element[], layoutOptions: LayoutOptions) => void) {
-        const options: LayoutOptions = this.engine.layoutOptions,
-              modelList: Model[] = [...constructList.element, ...constructList.pointer, ...constructList.link];
+    private layoutModels(layoutGroupTable: LayoutGroupTable): Group[] {
+        const modelGroupList: Group[] = [];
+
+        layoutGroupTable.forEach((group, groupName) => {
+            const options: LayoutOptions = group.options.layout,
+                  modelList: Model[] = group.modelList,
+                  modelGroup: Group = new Group();
         
-        // 首先初始化所有节点的坐标为0，且设定旋转
-        modelList.forEach(item => {
-            item.G6Item = item.shadowG6Item;
+            modelList.forEach(item => {
+                modelGroup.add(item);
+            });
+            
+            
+            this.initLayoutValue(group.element, group.pointer); // 初始化布局参数
+            group.layouter.layout(group.element, options);  // 布局节点
+            this.layoutPointer(group.pointer, group.options.pointer);  // 布局外部指针
+
+            modelGroupList.push(modelGroup);
         });
+
+        return modelGroupList;
+    }
+
+    /**
+     * 对所有组进行相互布局
+     * @param container 
+     * @param modelGroupTable 
+     */
+    private layoutGroups(container: Container, modelGroupList: Group[]): Group {
+        let wrapperGroup: Group = new Group(),
+            group: Group,
+            prevBound: BoundingRect, 
+            bound: BoundingRect,
+            boundList: BoundingRect[] = [],
+            maxHeight: number = -Infinity,
+            dx = 0, dy = 0;
         
-        // 初始化布局参数
-        this.initLayoutValue(constructList.element, constructList.pointer);
-        // 布局节点
-        layoutFn(constructList.element, options);
-        // 布局外部指针
-        this.layoutPointer(constructList.pointer);
+        // 左往右布局
+        for(let i = 0; i < modelGroupList.length; i++) {
+            group = modelGroupList[i],
+            bound = group.getPaddingBound(this.viewOptions.groupPadding);
 
-        // 将视图调整到画布中心
-        options.fitCenter && this.fitCenter(container, modelList);
+            if(prevBound) {
+                dx = prevBound.x + prevBound.width - bound.x;
+            }
+            else {
+                dx = bound.x;
+            }
 
-        modelList.forEach(item => {
-            item.G6Item = item.renderG6Item;
+            if(bound.height > maxHeight) {
+                maxHeight = bound.height;
+            }
+
+            group.translate(dx, 0);
+            Bound.translate(bound, dx, 0);
+            boundList.push(bound);
+            wrapperGroup.add(group);
+            prevBound = bound;
+        }
+
+        // 居中对齐布局
+        for(let i = 0; i < modelGroupList.length; i++) {
+            group = modelGroupList[i];
+            bound = boundList[i];
+
+            dy = maxHeight / 2 - bound.height / 2;
+            group.translate(0, dy);
+            Bound.translate(bound, 0, dy);
+        }
+
+        return wrapperGroup;
+    }
+
+    /**
+     * 布局
+     * @param container 
+     * @param layoutGroupTable 
+     */
+     public layoutAll(container: Container, layoutGroupTable: LayoutGroupTable) {
+        layoutGroupTable.forEach(item => {
+            item.modelList.forEach(model => {
+                model.G6Item = model.shadowG6Item;
+            });
+        });
+
+        const modelGroupList: Group[] = this.layoutModels(layoutGroupTable),
+              wrapperGroup: Group = this.layoutGroups(container, modelGroupList);
+
+        this.fitCenter(container, wrapperGroup);
+
+        layoutGroupTable.forEach(item => {
+            item.modelList.forEach(model => {
+                model.G6Item = model.renderG6Item;
+            });
         });
     }
 

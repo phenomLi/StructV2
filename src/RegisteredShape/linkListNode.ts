@@ -15,7 +15,8 @@ export default G6.registerNode('link-list-node', {
                 width: width,
                 height: height,
                 stroke: cfg.style.stroke || '#333',
-                fill: '#eee'
+                fill: '#eee',
+                cursor: cfg.style.cursor
             },
             name: 'wrapper'
         });
@@ -27,7 +28,8 @@ export default G6.registerNode('link-list-node', {
                 width: width * (2 / 3),
                 height: height,
                 fill: cfg.style.fill,
-                stroke: cfg.style.stroke || '#333'
+                stroke: cfg.style.stroke || '#333',
+                cursor: cfg.style.cursor
             },
             name: 'main-rect',
             draggable: true

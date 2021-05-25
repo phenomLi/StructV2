@@ -1,18 +1,17 @@
 import { Util } from "./util";
 import { BoundingRect, Bound } from "./boundingRect";
-import { Vector } from "./vector";
-import { Element } from "../Model/modelData";
+import { Element, Model } from "../Model/modelData";
 
 
 
 /**
- * element组
+ * model 集合组
  */
 export class Group {
     id: string;
-    private elements: Array<Element | Group> = [];
+    private models: Array<Model | Group> = [];
 
-    constructor(...arg: Array<Element | Group>) {
+    constructor(...arg: Array<Model | Group>) {
         this.id = Util.generateId();
 
         if(arg) {
@@ -24,25 +23,43 @@ export class Group {
      * 添加element
      * @param arg 
      */
-    add(...arg: Array<Element | Group>) {
+    add(...arg: Array<Model | Group>) {
         arg.map(ele => {
-            this.elements.push(ele);
+            this.models.push(ele);
         });
     }
 
     /**
-     * 移除element
+     * 移除 model
      * @param element 
      */
-    remove(element: Element | Group) {
-        Util.removeFromList(this.elements, item => item.id === element.id);
+    remove(model: Model | Group) {
+        Util.removeFromList(this.models, item => item.id === model.id);
     }
 
     /**
      * 获取group的包围盒
      */
     getBound(): BoundingRect {
-        return Bound.union(...this.elements.map(item => item.getBound()));
+        return this.models.length? 
+               Bound.union(...this.models.map(item => item.getBound())): 
+               { x: 0, y: 0, width: 0, height: 0 };
+    }
+
+    /**
+     * 获取具有一定内边距的包围盒
+     * @param padding 
+     * @returns 
+     */
+    getPaddingBound(padding: number = 0): BoundingRect {
+        const bound = this.getBound();
+
+        bound.x -= padding;
+        bound.y -= padding;
+        bound.width += padding * 2;
+        bound.height += padding * 2;
+
+        return bound;
     }
 
     /**
@@ -51,7 +68,7 @@ export class Group {
      * @param dy 
      */
     translate(dx: number, dy: number) {
-        this.elements.map(item => {
+        this.models.map(item => {
             if(item instanceof Group) {
                 item.translate(dx, dy);
             }
@@ -63,39 +80,9 @@ export class Group {
     }
 
     /**
-     * 旋转group
-     * @param rotation 
-     * @param center
-     */
-    rotate(rotation: number, center?: [number, number]) {
-        // if(rotation === 0) return;
-
-        // let {x, y, width, height} = this.getBound(),
-        //     cx = x + width / 2, 
-        //     cy = y + height / 2;
-
-        // if(center) {
-        //     cx = center[0];
-        //     cy = center[1];
-        // }
-
-        // this.elements.map(item => {
-        //     if(item instanceof Group) {
-        //         item.rotate(rotation, [cx, cy]);
-        //     }
-        //     else {
-        //         let d = Vector.rotation(rotation, [item.x, item.y], [cx, cy]);
-        //         item.x = d[0];
-        //         item.y = d[1];
-        //         item.set('rotation', rotation);
-        //     }
-        // });
-    }
-
-    /**
      * 清空group
      */
     clear() {
-        this.elements.length = 0;
+        this.models.length = 0;
     }
 }

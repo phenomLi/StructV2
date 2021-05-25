@@ -1,8 +1,7 @@
-import { Bound, BoundingRect } from "../../Common/boundingRect";
 import { Engine } from "../../engine";
-import { ConstructList } from "../../Model/modelConstructor";
-import { Element, Model, Pointer } from "../../Model/modelData";
-import { AnimationOptions, InteractionOptions, LayoutOptions } from "../../options";
+import { Model, Pointer } from "../../Model/modelData";
+import { AnimationOptions, InteractionOptions, LayoutGroupOptions, LayoutOptions } from "../../options";
+import { SV } from "../../StructV";
 import { Animations } from "../animation";
 import { g6Behavior, Renderer } from "../renderer";
 
@@ -25,20 +24,45 @@ export class Container {
         this.DOMContainer = DOMContainer;
         this.animationsOptions = engine.animationOptions;
         this.interactionOptions = engine.interactionOptions;
+        this.prevModelList = [];
+
+        const tooltip = new SV.G6.Tooltip({
+            offsetX: 10,
+            offsetY: 20,
+            shouldBegin(event) {
+                return event.item.getModel().SVModelType === 'element';
+            },
+            getContent(event) {
+                const data = event.item.SVModel.data,
+                      wrapper = document.createElement('div');
+
+                wrapper.style.padding = '0 4px 0 4px';
+                wrapper.innerHTML = `
+                    <h5>id: ${ event.item.SVModel.sourceId }</h5>
+                    <h5>data: ${ data? data: '' }</h5>
+                    `
+                return wrapper;
+            },
+            itemTypes: ['node']
+        });
+
         this.renderer = new Renderer(engine, DOMContainer, {
             ...g6Options,
             modes: {
-                default: this.initBehaviors()
-            } 
+                default: this.initBehaviors(this.engine.optionsTable)
+            },
+            plugins: [tooltip]
         });
-        this.prevModelList = [];
+
+        this.afterInitRenderer();
     }
 
     /**
      * 初始化交互行为
+     * @param optionsTable
      * @returns 
      */
-    protected initBehaviors(): g6Behavior[] {
+    protected initBehaviors(optionsTable: { [key: string]: LayoutGroupOptions }): g6Behavior[] {
         return ['drag-canvas', 'zoom-canvas'];
     }
 
@@ -119,6 +143,11 @@ export class Container {
      */
     protected handleChangeModels(models: Model[]) { }
 
+    /**
+     * 初始化渲染器之后的回调
+     */
+    protected afterInitRenderer() { }
+
     // ------------------------------------------ hook ---------------------------------------------
 
     afterAppendModels(callback: (models: Model[]) => void) {
@@ -135,11 +164,9 @@ export class Container {
     /**
      * 渲染函数
      * @param modelList
-     * @param layoutFn
      */
-    public render(constructList: ConstructList, layoutFn: (elements: Element[], layoutOptions: LayoutOptions) => void) {
-        const modelList: Model[] = [...constructList.element, ...constructList.link, ...constructList.pointer],
-              appendModels: Model[] = this.getAppendModels(this.prevModelList, modelList),
+    public render(modelList: Model[]) {
+        const appendModels: Model[] = this.getAppendModels(this.prevModelList, modelList),
               removeModels: Model[] = this.getRemoveModels(this.prevModelList, modelList),
               changeModels: Model[] = [...appendModels, ...this.findReTargetPointer(modelList)];
 

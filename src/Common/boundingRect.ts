@@ -107,6 +107,17 @@ export const Bound = {
     },
 
     /**
+     * 位移包围盒
+     * @param bound
+     * @param dx 
+     * @param dy 
+     */
+    translate(bound: BoundingRect, dx: number, dy: number) {
+        bound.x += dx;
+        bound.y += dy;
+    },
+
+    /**
      * 求包围盒旋转后新形成的包围盒
      * @param bound 
      * @param rot

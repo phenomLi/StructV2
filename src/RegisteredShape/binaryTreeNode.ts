@@ -27,7 +27,7 @@ export default G6.registerNode('binary-tree-node', {
                 y: height / 2,
                 width: width / 2,
                 height: height,
-                fill: cfg.style.fill,
+                fill: cfg.color || cfg.style.fill,
                 stroke: cfg.style.stroke || '#333',
                 cursor: cfg.style.cursor
             },

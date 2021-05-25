@@ -10,6 +10,10 @@ import { Vector } from "./Common/vector";
 import indexedNode from "./RegisteredShape/indexedNode";
 
 
+
+
+
+
 export const SV = {
     Engine: Engine,
     Group: Group,
@@ -17,6 +21,7 @@ export const SV = {
     Vector: Vector,
     Mat3: G6.Util.mat3,
     G6,
+
     registeredShape: [
         externalPointer, 
         linkListNode, 
@@ -24,6 +29,18 @@ export const SV = {
         twoCellNode,
         indexedNode
     ],
-    registerShape: G6.registerNode
+
+    registeredLayouter: {  },
+
+    registerShape: G6.registerNode,
+
+    /**
+     * 注册一个布局器
+     * @param name 
+     * @param layouter 
+     */
+    registerLayouter(name: string, layouter) {
+        SV.registeredLayouter[name] = layouter;
+    }
 };
 
