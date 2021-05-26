@@ -72,24 +72,30 @@ export class ViewManager {
      */
     private getFreedConstructList(layoutGroupTable: LayoutGroupTable): Model[] {
         let freedList: Model[] = [],
-            freedGroup = null,
-            freedGroupName = null;
+            freedGroup: LayoutGroup = null,
+            freedGroupName: string = null,
+            removeModels: Model[] = [];
 
-        for(let group in layoutGroupTable) {
-            let freedElements: Model[] = layoutGroupTable[group].element.filter(item => item.freed);
+        layoutGroupTable.forEach((group, key) => {
+            let freedElements: Model[] = group.element.filter(item => item.freed);
 
             if(freedElements.length) {
-                freedGroupName = group;
-                break;
+                freedGroupName = key;
+                freedList = freedElements;
             }
-        }
+        });
 
-        freedGroup = layoutGroupTable[freedGroupName];
+        freedGroup = layoutGroupTable.get(freedGroupName);
 
         freedList.forEach(fItem => {
-            freedGroup.element.splice(freedGroup.element.findIndex(item => item.id === fItem.id), 1);
-            freedGroup.link.splice(freedGroup.link.findIndex(item => item.element.id === fItem.id || item.target.id === fItem.id));
-            freedGroup.pointer.splice(freedGroup.pointer.findIndex(item => item.target.id === fItem.id));
+            removeModels.push(...freedGroup.element.splice(freedGroup.element.findIndex(item => item.id === fItem.id), 1));
+            removeModels.push(...freedGroup.link.splice(freedGroup.link.findIndex(item => item.element.id === fItem.id || item.target.id === fItem.id)));
+            removeModels.push(...freedGroup.pointer.splice(freedGroup.pointer.findIndex(item => item.target.id === fItem.id)));
+        });
+
+        removeModels.map(model => {
+            const index = freedGroup.modelList.findIndex(item => item.id === model.id);
+            freedGroup.modelList.splice(index, 1);
         });
 
         return freedList;

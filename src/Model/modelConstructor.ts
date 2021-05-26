@@ -40,25 +40,15 @@ export class ModelConstructor {
 
         Object.keys(sources).forEach(name => {
             let sourceGroup = sources[name],
-                layouterName = sourceGroup.layouter;
+                layouterName = sourceGroup.layouter,
+                layouter: Layouter = layouterMap[sourceGroup.layouter];
 
-            if(!layouterName) {
-                layoutGroupTable.set(name, {
-                    element: [],
-                    link: [],
-                    pointer: [],
-                    options: null,
-                    layouter: null,
-                    modelList: []
-                });
-
+            if(!layouterName || !layouter) {
                 return;
             }
 
             let sourceDataString: string = JSON.stringify(sourceGroup.data),
                 prevString: string = this.prevSourcesStringMap[name],
-                layouter: Layouter = null,
-                options: LayoutGroupOptions = null,
                 elementList: Element[] = [],
                 pointerList: Pointer[] = [];
 
@@ -66,13 +56,14 @@ export class ModelConstructor {
                 return;
             }
         
-            layouter = layouterMap[sourceGroup.layouter];
-            options = optionsTable[layouterName];
+            const options: LayoutGroupOptions = optionsTable[layouterName],
+                  elementOptions = options.element || { },
+                  pointerOptions = options.pointer || { };
 
             const sourceData = layouter.sourcesPreprocess? layouter.sourcesPreprocess(sourceGroup.data): sourceGroup.data;
                 
-            elementList = this.constructElements(options.element, name, sourceData, layouterName);
-            pointerList = this.constructPointers(options.pointer, elementList);
+            elementList = this.constructElements(elementOptions, name, sourceData, layouterName);
+            pointerList = this.constructPointers(pointerOptions, elementList);
             
             layoutGroupTable.set(name, {
                 element: elementList,
@@ -85,7 +76,8 @@ export class ModelConstructor {
         });
         
         layoutGroupTable.forEach((layoutGroup: LayoutGroup) => {
-            const linkList: Link[] = this.constructLinks(layoutGroup.options.link, layoutGroup.element, layoutGroupTable);
+            const linkOptions = layoutGroup.options.link || { },
+                  linkList: Link[] = this.constructLinks(linkOptions, layoutGroup.element, layoutGroupTable);
 
             layoutGroup.link = linkList;
             layoutGroup.modelList.push(...linkList);

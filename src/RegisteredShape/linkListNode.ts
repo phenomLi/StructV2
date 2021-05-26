@@ -7,7 +7,7 @@ export default G6.registerNode('link-list-node', {
 
         const width = cfg.size[0],
               height = cfg.size[1];
-
+              
         const wrapperRect = group.addShape('rect', {
             attrs: {
                 x: width / 2,
@@ -57,12 +57,12 @@ export default G6.registerNode('link-list-node', {
 
     getAnchorPoints() {
         return [
-            [0, 0.5],
-            [5 / 6, 0.5],
-            [5 / 6, 0],
-            [5 / 6, 1],
             [0.5, 0],
-            [0.5, 1]
+            [5 / 6, 0],
+            [5 / 6, 0.5],
+            [5 / 6, 1],
+            [0.5, 1],
+            [0, 0.5]
         ];
     }
 });

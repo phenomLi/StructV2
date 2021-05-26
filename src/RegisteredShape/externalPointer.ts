@@ -8,7 +8,8 @@ export default G6.registerNode('external-pointer', {
         const keyShape = group.addShape('path', {
             attrs: {
                 path: this.getPath(cfg),
-                fill: cfg.style.fill
+                fill: cfg.style.fill,
+                matrix: cfg.style.matrix
             },
             name: 'pointer-path'
         });

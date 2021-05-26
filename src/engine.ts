@@ -18,7 +18,7 @@ export class Engine {
 
     public optionsTable: { [key: string]: LayoutGroupOptions };
 
-    constructor(DOMContainer: HTMLElement, engineOptions: EngineOptions = { }) {
+    constructor(DOMContainer: HTMLElement, engineOptions: EngineOptions) {
         this.optionsTable = {};
 
         this.engineOptions = Object.assign({

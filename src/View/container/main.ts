@@ -102,8 +102,13 @@ import { Container } from "./container";
             dragStartY = null;
 
         g6Instance.on('node:dragstart', ev => {
-            const model = ev.item.getModel(),
-                  dragNode = this.engine.optionsTable[model.SVLayouter].behavior.dragNode;
+            const model = ev.item.getModel();
+
+            if(model.SVModelType === 'pointer') {
+                return;
+            }
+
+            const dragNode = this.engine.optionsTable[model.SVLayouter].behavior.dragNode;
 
             if(dragNode === false) {
                 return;

@@ -36,7 +36,7 @@ export interface ElementOption {
     type: string;
     size: number | [number, number];
     rotation: number;
-    anchorPoint: [number, number];
+    anchorPoints: [number, number];
     label: string;
     labelOptions: ElementLabelOption;
     style: Style;

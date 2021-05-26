@@ -1,5 +1,6 @@
 import { Bound, BoundingRect } from '../Common/boundingRect';
 import { Group } from '../Common/group';
+import { Vector } from '../Common/vector';
 import { Engine } from '../engine';
 import { LayoutGroupTable } from '../Model/modelConstructor';
 import { Element, Model, Pointer } from '../Model/modelData';
@@ -41,12 +42,24 @@ export class Layouter {
                   anchor = options.anchor || 0;
 
             let target = item.target,
-                targetBound: BoundingRect = item.target.getBound(),
-                anchorPosition = item.target.G6Item.getAnchorPoints()[anchor];
+                targetBound: BoundingRect = target.getBound(),
+                anchorPosition = item.target.G6Item.getAnchorPoints()[anchor],
+                center: [number, number] = [targetBound.x + targetBound.width / 2, targetBound.y + targetBound.height / 2],
+                pointerPosition: [number, number];
+
+            anchorPosition = [anchorPosition.x, anchorPosition.y];
+
+            let anchorVector = Vector.subtract(anchorPosition, center),
+                angle = anchorVector[0] === 0? 0: (Math.PI / 2 - Math.atan(anchorVector[1] / anchorVector[0])),
+                len = Vector.length(anchorVector) + offset;
+
+            anchorVector = Vector.normalize(anchorVector);
+            pointerPosition = Vector.location(center, anchorVector, len);
 
             item.set({
-                x: targetBound.x + targetBound.width / 2,
-                y: targetBound.y - offset
+                x: pointerPosition[0],
+                y: pointerPosition[1],
+                rotation: angle
             });
         });
     }   
@@ -56,7 +69,7 @@ export class Layouter {
      * @param container
      * @param models
      */
-     private fitCenter(container: Container, group: Group) {
+    private fitCenter(container: Container, group: Group) {
         let width = container.getG6Instance().getWidth(),
             height = container.getG6Instance().getHeight(),
             viewBound: BoundingRect = group.getBound(),
@@ -151,7 +164,7 @@ export class Layouter {
      * @param container 
      * @param layoutGroupTable 
      */
-     public layoutAll(container: Container, layoutGroupTable: LayoutGroupTable) {
+    public layoutAll(container: Container, layoutGroupTable: LayoutGroupTable) {
         layoutGroupTable.forEach(item => {
             item.modelList.forEach(model => {
                 model.G6Item = model.shadowG6Item;

@@ -60,7 +60,7 @@ export default G6.registerNode('binary-tree-node', {
         return [
             [0.5, 0],
             [0.125, 0.5],
-            [0.875, 0.5],
+            [0.875, 0.5]
         ];
     },
 });

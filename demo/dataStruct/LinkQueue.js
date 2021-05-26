@@ -216,43 +216,59 @@
     }
 }
 
-const data = {
-    head: [
-        {
-            "type": "QPtr",
-            "id": 140737338526359,
-            "label": "front",
-            "front": "node#8358681150976310000",
-            "external": [
-                "lq"
-            ]
-        },
-        {
-            "type": "QPtr",
-            "id": 140737338526360,
-            "label": "rear",
-            "rear": "node#15844482482171916",
-            "external": null
-        }
-    ],
-    node: []
+
+{
+    "LinkQueue": {
+        "data": [
+            {
+                "type": "head",
+                "name": "Qptr",
+                "id": 6385328,
+                "label": "front",
+                "front": "node#6385360",
+                "external": [
+                    "lq"
+                ]
+            },
+            {
+                "type": "head",
+                "name": "Qptr",
+                "id": 6385329,
+                "label": "rear",
+                "rear": "node#6385424",
+                "external": null
+            },
+            {
+                "id": 6385360,
+                "data": "",
+                "next": "node#6385424",
+                "type": "node"
+            },
+            {
+                "id": 6385424,
+                "data": "F",
+                "next": null,
+                "type": "node"
+            },
+            {
+                "id": 6385392,
+                "data": "",
+                "next": "node#6311952",
+                "freed": true,
+                "external": [
+                    "p"
+                ],
+                "type": "node"
+            },
+            {
+                "id": 6311952,
+                "data": "1",
+                "next": null,
+                "type": "node"
+            }
+        ],
+        "layouter": "LinkQueue"
+    }
 }
-
-let d = [
-    { id: 10, type: 'head', name: 'QPtr', label: 'front', external: ['lq'], front: 0 },
-    { id: 11, type: 'head', name: 'QPtr', label: 'rear', external: null, rear: 2 },
-    { id: 0, next: 1 },
-    { id: 1, next: 2 },
-    { id: 2 }
-];
-
-
-
-const LQueue = function(container) {
-    return{
-        engine: new LinkQueue(container),
-        data: [data]
-    } 
-};
 
 
