@@ -25,17 +25,17 @@ export class ViewManager {
     constructor(engine: Engine, DOMContainer: HTMLElement) {
         this.engine = engine;
         this.layouter = new Layouter(engine);
-        this.mainContainer = new MainContainer(engine, DOMContainer);
+        this.mainContainer = new MainContainer(engine, DOMContainer, { tooltip: true });
         this.prevLayoutGroupTable = null;
 
         const options: EngineOptions = this.engine.engineOptions;
 
         if(options.freedContainer) {
-            this.freedContainer = new FreedContainer(engine, options.freedContainer, { fitCenter: true });
+            this.freedContainer = new FreedContainer(engine, options.freedContainer, { fitCenter: true, tooltip: false });
         }
 
         if(options.leakContainer) {
-            this.leakContainer = new LeakContainer(engine, options.leakContainer, { fitCenter: true });
+            this.leakContainer = new LeakContainer(engine, options.leakContainer, { fitCenter: true, tooltip: false });
         }
 
         this.shadowG6Instance = new SV.G6.Graph({
@@ -119,11 +119,16 @@ export class ViewManager {
 
             if(curGroup) {
                 elements = prevGroup.element.filter(item => !curGroup.element.find(n => n.id === item.id)).filter(item => item.freed === false),
-                links = prevGroup.link.filter(item => !curGroup.link.find(n => n.id === item.id)),
-                elementIds = elements.map(item => item.id);
+                links = prevGroup.link.filter(item => !curGroup.link.find(n => n.id === item.id));
+                elements = curGroup.layouter.defineLeakRule(elements);
+            }
+            else {
+                elements = prevGroup.element;
+                links = prevGroup.link;
             }
 
             elements.forEach(item => {
+                elementIds.push(item.id);
                 item.set('style', {
                     fill: '#ccc'
                 });

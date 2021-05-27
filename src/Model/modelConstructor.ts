@@ -57,10 +57,9 @@ export class ModelConstructor {
             }
         
             const options: LayoutGroupOptions = optionsTable[layouterName],
+                  sourceData = layouter.sourcesPreprocess(sourceGroup.data),
                   elementOptions = options.element || { },
                   pointerOptions = options.pointer || { };
-
-            const sourceData = layouter.sourcesPreprocess? layouter.sourcesPreprocess(sourceGroup.data): sourceGroup.data;
                 
             elementList = this.constructElements(elementOptions, name, sourceData, layouterName);
             pointerList = this.constructPointers(pointerOptions, elementList);

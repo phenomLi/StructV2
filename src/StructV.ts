@@ -9,6 +9,9 @@ import twoCellNode from "./RegisteredShape/twoCellNode";
 import { Vector } from "./Common/vector";
 import indexedNode from "./RegisteredShape/indexedNode";
 import { EngineOptions, Layouter } from "./options";
+import { LayoutGroup } from "./Model/modelConstructor";
+import { SourceElement } from "./sources";
+import { Element } from "./Model/modelData";
 
 
 export interface StructV {
@@ -54,7 +57,24 @@ SV.registeredShape = [
 ];
 
 SV.registerShape = G6.registerNode;
-SV.registerLayouter = function(name: string, layouter) {
+SV.registerLayouter = function(name: string, layouter: Layouter) {
+
+    if(typeof layouter.sourcesPreprocess !== 'function') {
+        layouter.sourcesPreprocess = function(data: SourceElement[]): SourceElement[] {
+            return data;
+        }
+    }
+
+    if(typeof layouter.defineLeakRule !== 'function') {
+        layouter.defineLeakRule = function(elements: Element[]): Element[] {
+            return elements;
+        }
+    }
+
+    if(typeof layouter.defineOptions !== 'function' || typeof layouter.layout !== 'function') {
+        return;
+    }
+    
     SV.registeredLayouter[name] = layouter;
 };
 

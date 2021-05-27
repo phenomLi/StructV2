@@ -1,3 +1,4 @@
+import { LayoutGroup } from "./Model/modelConstructor";
 import { Element } from "./Model/modelData";
 import { SourceElement } from "./sources";
 
@@ -118,7 +119,8 @@ export interface EngineOptions {
 export interface Layouter {
     defineOptions(): LayoutGroupOptions;
     sourcesPreprocess?(sources: SourceElement[]): SourceElement[];
+    defineLeakRule?(elements: Element[]): Element[];
     layout(elements: Element[], layoutOptions: LayoutOptions);
-    [key: string]: Function;
+    [key: string]: any;
 }
 

@@ -26,32 +26,38 @@ export class Container {
         this.interactionOptions = engine.interactionOptions;
         this.prevModelList = [];
 
-        const tooltip = new SV.G6.Tooltip({
-            offsetX: 10,
-            offsetY: 20,
-            shouldBegin(event) {
-                return event.item.getModel().SVModelType === 'element';
-            },
-            getContent(event) {
-                const data = event.item.SVModel.data,
-                      wrapper = document.createElement('div');
+        const g6Plugins = [];
 
-                wrapper.style.padding = '0 4px 0 4px';
-                wrapper.innerHTML = `
-                    <h5>id: ${ event.item.SVModel.sourceId }</h5>
-                    <h5>data: ${ data? data: '' }</h5>
-                    `
-                return wrapper;
-            },
-            itemTypes: ['node']
-        });
+        if(g6Options.tooltip) {
+            const tooltip = new SV.G6.Tooltip({
+                offsetX: 10,
+                offsetY: 20,
+                shouldBegin(event) {
+                    return event.item.getModel().SVModelType === 'element';
+                },
+                getContent(event) {
+                    const data = event.item.SVModel.data,
+                          wrapper = document.createElement('div');
+    
+                    wrapper.style.padding = '0 4px 0 4px';
+                    wrapper.innerHTML = `
+                        <h5>id: ${ event.item.SVModel.sourceId }</h5>
+                        <h5>data: ${ data? data: '' }</h5>
+                        `
+                    return wrapper;
+                },
+                itemTypes: ['node']
+            });
+
+            g6Plugins.push(tooltip);
+        }
 
         this.renderer = new Renderer(engine, DOMContainer, {
-            ...g6Options,
+            fitCenter: g6Options.fitCenter,
             modes: {
                 default: this.initBehaviors(this.engine.optionsTable)
             },
-            plugins: [tooltip]
+            plugins: g6Plugins
         });
 
         this.afterInitRenderer();
