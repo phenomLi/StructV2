@@ -9,6 +9,7 @@ import { LeakContainer } from "./container/leak";
 import { Layouter } from "./layouter";
 import { LayoutGroup, LayoutGroupTable } from "../Model/modelConstructor";
 import { Util } from "../Common/util";
+import { EventBus } from "../Common/eventBus";
 
 
 export class ViewManager {
@@ -226,6 +227,7 @@ export class ViewManager {
         }
 
         if(this.freedContainer) {
+            EventBus.emit('onFreed', freedList);
             this.freedContainer.render(freedList);
         }
 
@@ -237,6 +239,7 @@ export class ViewManager {
 
         if(this.leakContainer && this.prevLayoutGroupTable) {
             this.mainContainer.afterRemoveModels(() => {
+                EventBus.emit('onLeak', leakLayoutGroupTable);
                 this.leakContainer.render(Util.convertGroupTable2ModelList(leakLayoutGroupTable));
             });
         }

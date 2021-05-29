@@ -2,6 +2,13 @@ import { Model } from "../Model/modelData";
 import { SV } from "../StructV";
 
 
+export type animationConfig = {
+    duration: number;
+    timingFunction: string;
+    payload?: any;
+    callback?: Function;
+}
+
 
 /**
  * 动画表
@@ -11,19 +18,17 @@ export const Animations = {
     /**
      * 添加节点 / 边时的动画效果
      * @param model 
-     * @param duration 
-     * @param timingFunction 
-     * @param callback 
+     * @param animationConfig
      */
-    animate_append(model: Model, duration: number, timingFunction: string, callback: Function = null) {
+    animate_append(model: Model, animationConfig: animationConfig) {
         const G6Item = model.G6Item,
               type = G6Item.getType(),
               group = G6Item.getContainer(),
               Mat3 = SV.Mat3,
               animateCfg = {
-                  duration: duration,
-                  easing: timingFunction,
-                  callback
+                  duration: animationConfig.duration,
+                  easing: animationConfig.timingFunction,
+                  callback: animationConfig.callback
               };
 
         if(type === 'node') {
@@ -49,19 +54,17 @@ export const Animations = {
     /**
      * 移除节点 / 边时的动画效果
      * @param model 
-     * @param duration 
-     * @param timingFunction 
-     * @param callback 
+     * @param animationConfig
      */
-     animate_remove(model: Model, duration: number, timingFunction: string, callback: Function = null) {
+    animate_remove(model: Model, animationConfig: animationConfig) {
         const G6Item = model.G6Item,
               type = G6Item.getType(),
               group = G6Item.getContainer(),
               Mat3 = SV.Mat3,
               animateCfg = {
-                  duration: duration,
-                  easing: timingFunction,
-                  callback
+                  duration: animationConfig.duration,
+                  easing: animationConfig.timingFunction,
+                  callback: animationConfig.callback
               };
 
         if(type === 'node') {
@@ -77,6 +80,28 @@ export const Animations = {
 
             line.animate({ lineDash: [0, length], opacity: 0 }, animateCfg);
         }
+    },
+
+    /**
+     * 移动节点 / 边的动画
+     * @param model 
+     * @param animationConfig 
+     */
+    animate_moveTo(model: Model, animationConfig: animationConfig) {
+        const G6Item = model.G6Item,
+              group = G6Item.getContainer(),
+              Mat3 = SV.Mat3,
+              target = animationConfig.payload,
+              animateCfg = {
+                  duration: animationConfig.duration,
+                  easing: animationConfig.timingFunction,
+                  callback: animationConfig.callback
+              };
+              
+        let matrix = Mat3.clone(group.getMatrix());
+
+        Mat3.translate(matrix, matrix, [target.x, target.y]);
+        group.animate({ opacity: 0, matrix }, animateCfg);
     }
     
 };

@@ -4,6 +4,7 @@ import { ModelConstructor } from "./Model/modelConstructor";
 import { AnimationOptions, EngineOptions, InteractionOptions, LayoutGroupOptions, ViewOptions } from "./options";
 import { ViewManager } from "./View/viewManager";
 import { SV } from "./StructV";
+import { EventBus } from "./Common/eventBus";
 
 
 export class Engine { 
@@ -190,6 +191,15 @@ export class Engine {
      * @param callback 
      */
     public on(eventName: string, callback: Function) {
+        if(typeof callback !== 'function') {
+            return;
+        }
+
+        if(eventName === 'onFreed' || eventName === 'onLeak') {
+            EventBus.on(eventName, callback);
+            return;
+        }
+
         this.viewManager.getG6Instance().on(eventName, callback);
     }
 

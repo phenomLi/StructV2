@@ -112,11 +112,15 @@ export class Container {
         let counter = 0;
 
         appendModels.forEach(item => {
-            Animations.animate_append(item, this.animationsOptions.duration, this.animationsOptions.timingFunction, () => {
-                counter++;
-
-                if(counter === appendModels.length) {
-                    this.afterAppendModelsCallbacks.map(item => item(appendModels));
+            Animations.animate_append(item, {
+                duration: this.animationsOptions.duration,
+                timingFunction: this.animationsOptions.timingFunction,
+                callback: () => {
+                    counter++;
+    
+                    if(counter === appendModels.length) {
+                        this.afterAppendModelsCallbacks.map(item => item(appendModels));
+                    }
                 }
             });
         });
@@ -130,14 +134,18 @@ export class Container {
         let counter = 0;
 
         removeModels.forEach(item => {
-            Animations.animate_remove(item, this.animationsOptions.duration, this.animationsOptions.timingFunction, () => {
-                this.renderer.removeModel(item);
-                item.renderG6Item = item.G6Item = null;
-
-                counter++;
-
-                if(counter === removeModels.length) {
-                    this.afterRemoveModelsCallbacks.map(item => item(removeModels));
+            Animations.animate_remove(item, { 
+                duration: this.animationsOptions.duration,
+                timingFunction: this.animationsOptions.timingFunction,
+                callback: () => {
+                    this.renderer.removeModel(item);
+                    item.renderG6Item = item.G6Item = null;
+    
+                    counter++;
+    
+                    if(counter === removeModels.length) {
+                        this.afterRemoveModelsCallbacks.map(item => item(removeModels));
+                    }
                 }
             });
         });

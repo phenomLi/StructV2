@@ -152,6 +152,8 @@ import { Container } from "./container";
         });
     }
 
+    protected 
+
     protected handleChangeModels(models: Model[]) {
         const changeHighlightColor: string = this.interactionOptions.changeHighlight;
 
