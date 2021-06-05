@@ -1,4 +1,3 @@
-import { LayoutGroup } from "./Model/modelConstructor";
 import { Element } from "./Model/modelData";
 import { SourceElement } from "./sources";
 
@@ -38,7 +37,7 @@ export interface ElementOption {
     size: number | [number, number];
     rotation: number;
     anchorPoints: [number, number];
-    label: string;
+    label: string | string[];
     labelOptions: ElementLabelOption;
     style: Style;
 }

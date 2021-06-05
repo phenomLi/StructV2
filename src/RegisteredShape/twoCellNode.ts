@@ -34,22 +34,58 @@ export default G6.registerNode('two-cell-node', {
             draggable: true
         });
 
+        const style = (cfg.labelCfg && cfg.labelCfg.style) || {};
+
         if (cfg.label) {
-            const style = (cfg.labelCfg && cfg.labelCfg.style) || {};
-            group.addShape('text', {
-                attrs: {
-                    x: width * (3 / 4), 
-                    y: height,
-                    textAlign: 'center',
-                    textBaseline: 'middle',
-                    text: cfg.label,
-                    fill: style.fill || '#000',
-                    fontSize: style.fontSize || 16,
-                    cursor: cfg.style.cursor,
-                },
-                name: 'text',
-                draggable: true
-            });
+            if(Array.isArray(cfg.label)) {
+                let tag = cfg.label[0], data = cfg.label[1];
+
+                group.addShape('text', {
+                    attrs: {
+                        x: width * (3 / 4), 
+                        y: height,
+                        textAlign: 'center',
+                        textBaseline: 'middle',
+                        text: tag,
+                        fill: style.fill || '#000',
+                        fontSize: style.fontSize || 16,
+                        cursor: cfg.style.cursor,
+                    },
+                    name: 'text',
+                    draggable: true
+                });
+
+                group.addShape('text', {
+                    attrs: {
+                        x: width * (5 / 4), 
+                        y: height,
+                        textAlign: 'center',
+                        textBaseline: 'middle',
+                        text: data,
+                        fill: style.fill || '#000',
+                        fontSize: style.fontSize || 16,
+                        cursor: cfg.style.cursor,
+                    },
+                    name: 'text',
+                    draggable: true
+                });
+            }
+            else {
+                group.addShape('text', {
+                    attrs: {
+                        x: width * (3 / 4), 
+                        y: height,
+                        textAlign: 'center',
+                        textBaseline: 'middle',
+                        text: cfg.label,
+                        fill: style.fill || '#000',
+                        fontSize: style.fontSize || 16,
+                        cursor: cfg.style.cursor,
+                    },
+                    name: 'text',
+                    draggable: true
+                });
+            }
         }
 
         return wrapperRect;
@@ -57,9 +93,10 @@ export default G6.registerNode('two-cell-node', {
 
     getAnchorPoints() {
         return [
-            [0, 0.5],
+            [0.5, 0],
             [3 / 4, 0.5],
-            [0.5, 0]
+            [0.5, 1],
+            [0, 0.5]
         ];
     }
 });

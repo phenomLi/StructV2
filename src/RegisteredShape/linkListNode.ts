@@ -60,6 +60,7 @@ export default G6.registerNode('link-list-node', {
             [0.5, 0],
             [5 / 6, 0],
             [5 / 6, 0.5],
+            [1, 0.5],
             [5 / 6, 1],
             [0.5, 1],
             [0, 0.5]

@@ -13,7 +13,7 @@ export interface G6NodeModel {
     type: string;
     size: number | [number, number];
     anchorPoints: [number, number];
-    label: string;
+    label: string | string[];
     style: Style;
     labelCfg: ElementLabelOption;
     externalPointerId: string; 

@@ -213,11 +213,28 @@ export class ModelConstructor {
      */
     private createElement(sourceElement: SourceElement, elementName: string, groupName: string, layouterName: string, options: ElementOption): Element {
         let element: Element = undefined,
-            label = options.label? this.parserElementContent(sourceElement, options.label): '',
+            label: string | string[] = '',
             id =  elementName + '.' + sourceElement.id.toString();
 
-        if(label === null || label === 'undefined') {
-            label = '';
+        if(options.label) {
+            if(Array.isArray(options.label)) {
+                label = options.label.map(item => {
+                    let res = this.parserElementContent(sourceElement, item);
+
+                    if(res === null || label === 'undefined') {
+                        return '';
+                    }
+
+                    return res;
+                });
+            }
+            else {
+                label = this.parserElementContent(sourceElement, options.label);
+
+                if(label === null || label === 'undefined') {
+                    label = '';
+                }
+            }
         }
 
         element = new Element(id, elementName, groupName, layouterName, sourceElement);

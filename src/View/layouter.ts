@@ -59,7 +59,7 @@ export class Layouter {
             item.set({
                 x: pointerPosition[0],
                 y: pointerPosition[1],
-                rotation: angle
+                rotation: Math.sign(anchorVector[0]) * angle
             });
         });
     }   
