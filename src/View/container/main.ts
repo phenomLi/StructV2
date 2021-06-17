@@ -1,5 +1,7 @@
+import { Engine } from "../../engine";
 import { Link, Model } from "../../Model/modelData";
 import { InteractionOptions, LayoutGroupOptions } from "../../options";
+import { Animations } from "../animation";
 import { Container } from "./container";
 
 
@@ -8,7 +10,39 @@ import { Container } from "./container";
  * 主可视化视图
  */
  export class MainContainer extends Container {
+    private leakContainerPosition: { x: number, y: number } = null;
+    private freedContainerPosition: { x: number, y: number } = null;
 
+    constructor(engine: Engine, DOMContainer: HTMLElement, g6Options: { [key: string]: any } = { }) {
+        super(engine, DOMContainer, g6Options);
+
+        this.leakContainerPosition = this.getDOMPosition(this.engine.engineOptions.leakContainer);
+        this.freedContainerPosition = this.getDOMPosition(this.engine.engineOptions.freedContainer);
+    }
+
+    /**
+     * 
+     * @param dom 
+     * @returns 
+     */
+    private getDOMPosition(dom: HTMLElement): { x: number, y: number } {
+        if(dom === null) {
+            return { x: 0, y: 0 };
+        }
+
+        const bound = dom.getBoundingClientRect();
+
+        return {
+            x: bound.x + bound.width / 2,
+            y: bound.y + bound.height / 2
+        };
+    }
+
+    /**
+     * 
+     * @param optionsTable 
+     * @returns 
+     */
     protected initBehaviors(optionsTable: { [key: string]: LayoutGroupOptions }) {
         const dragNodeTable: { [key: string]: boolean | string[] } = { },
               selectNodeTable: { [key: string]: boolean | string[] } = { },
@@ -151,8 +185,6 @@ import { Container } from "./container";
             });
         });
     }
-
-    protected 
 
     protected handleChangeModels(models: Model[]) {
         const changeHighlightColor: string = this.interactionOptions.changeHighlight;

@@ -35,7 +35,7 @@ export class Engine {
 
         this.animationOptions = Object.assign({
             enable: true,
-            duration: 750,
+            duration: 1000,
             timingFunction: 'easePolyOut'
         }, engineOptions.animation);
 

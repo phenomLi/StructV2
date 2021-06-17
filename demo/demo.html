@@ -39,23 +39,25 @@
     background-color: #fafafa;
 }
 
-
 </style>
 </head>
 <body>
 
-<div class="container" id="container"></div>
+<div class="container" id="container">
+
+
+</div>
 
 <button id="btn">change</button>
 <button id="btn-next">reLayout</button>
 <button id="btn-set">set</button>
+
 <span id="pos"></span>
 
-<div class="down">
+<div class="down container">
     <div id="freed"></div>
     <div id="leak"></div>
 </div>
-
 
 <script src="./../dist/sv.js"></script>
 <script>
@@ -128,8 +130,6 @@ container.addEventListener('mousemove', e => {
     let x = e.offsetX, y = e.offsetY;
     pos.innerHTML = `${x},${y}`;
 });
-
-
 
 
 </script>

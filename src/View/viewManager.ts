@@ -19,7 +19,7 @@ export class ViewManager {
     private freedContainer: Container;
     private leakContainer: Container;
 
-    private prevLayoutGroupTable: LayoutGroupTable;
+    private prevModelList: Model[];
 
     private shadowG6Instance;
 
@@ -27,7 +27,7 @@ export class ViewManager {
         this.engine = engine;
         this.layouter = new Layouter(engine);
         this.mainContainer = new MainContainer(engine, DOMContainer, { tooltip: true });
-        this.prevLayoutGroupTable = null;
+        this.prevModelList = [];
 
         const options: EngineOptions = this.engine.engineOptions;
 
@@ -48,21 +48,11 @@ export class ViewManager {
      * 对每一个 model 在离屏 Canvas 上构建 G6 item，用作布局
      * @param constructList
      */
-    private build(layoutGroupTable: LayoutGroupTable) {
-        layoutGroupTable.forEach(group => {
-            group.element.map(item => item.cloneProps()).forEach(item => this.shadowG6Instance.addItem('node', item));
-            group.pointer.map(item => item.cloneProps()).forEach(item => this.shadowG6Instance.addItem('node', item));
-            group.link.map(item => item.cloneProps()).forEach(item => this.shadowG6Instance.addItem('edge', item));
-            
-            group.element.forEach(item => {
-                item.shadowG6Item = this.shadowG6Instance.findById(item.id);
-            });
-            group.pointer.forEach(item => {
-                item.shadowG6Item = this.shadowG6Instance.findById(item.id);
-            });
-            group.link.forEach(item => {
-                item.shadowG6Item = this.shadowG6Instance.findById(item.id);
-            });
+    private build(modelList: Model[]) {
+        modelList.forEach(item => {
+            const type = item instanceof Link? 'edge': 'node';
+            this.shadowG6Instance.addItem(type, item.cloneProps());
+            item.shadowG6Item = this.shadowG6Instance.findById(item.id);
         });
     }
 
@@ -71,7 +61,7 @@ export class ViewManager {
      * @param layoutGroupTable 
      * @returns 
      */
-    private getFreedConstructList(layoutGroupTable: LayoutGroupTable): Model[] {
+    private getFreedModelList(layoutGroupTable: LayoutGroupTable): Model[] {
         let freedList: Model[] = [],
             freedGroup: LayoutGroup = null,
             freedGroupName: string = null,
@@ -104,29 +94,15 @@ export class ViewManager {
 
     /**
      * 获取被泄露的节点
-     * @param constructList 
-     * @param prevConstructList
+     * @param prevModelList 
+     * @param modelList 
      * @returns 
      */
-    private getLeakConstructList(prevLayoutGroupTable: LayoutGroupTable, layoutGroupTable: LayoutGroupTable): LayoutGroupTable {
-        const leakLayoutGroupTable = new Map<string, LayoutGroup>();
-
-        prevLayoutGroupTable.forEach((item, groupName) => {
-            let prevGroup = item,
-                curGroup = layoutGroupTable.get(groupName),
-                elements: Element[] = [],
-                links: Link[] = [],
-                elementIds: string[] = [];
-
-            if(curGroup) {
-                elements = prevGroup.element.filter(item => !curGroup.element.find(n => n.id === item.id)).filter(item => item.freed === false),
-                links = prevGroup.link.filter(item => !curGroup.link.find(n => n.id === item.id));
-                elements = curGroup.layouter.defineLeakRule(elements);
-            }
-            else {
-                elements = prevGroup.element;
-                links = prevGroup.link;
-            }
+    private getLeakModelList(prevModelList: Model[], modelList: Model[]): Model[] {
+        const leakModelList: Model[] = prevModelList.filter(item => !modelList.find(n => n.id === item.id)),
+              elements: Element[] = <Element[]>leakModelList.filter(item => item instanceof Element && item.freed === false),
+              links: Link[] = <Link[]>leakModelList.filter(item => item instanceof Link),
+              elementIds: string[] = [];
 
             elements.forEach(item => {
                 elementIds.push(item.id);
@@ -134,32 +110,22 @@ export class ViewManager {
                     fill: '#ccc'
                 });
             });
-    
+
             for(let i = 0; i < links.length; i++) {
                 let sourceId = links[i].element.id,
                     targetId = links[i].target.id;
-    
+
                 links[i].set('style', {
                     stroke: '#333'
                 });
-    
+
                 if(elementIds.find(item => item === sourceId) === undefined || elementIds.find(item => item === targetId) === undefined) {
                     links.splice(i, 1);
                     i--;
                 }
             }
 
-            leakLayoutGroupTable.set(groupName, {
-                element: elements,
-                link: links,
-                pointer: [],
-                layouter: prevGroup.layouter,
-                options: prevGroup.options,
-                modelList: [...elements, ...links]
-            });
-        });
-
-        return leakLayoutGroupTable;
+        return [...elements, ...links];
     }
 
     // ----------------------------------------------------------------------------------------------
@@ -216,17 +182,19 @@ export class ViewManager {
     renderAll(layoutGroupTable: LayoutGroupTable) {
         this.shadowG6Instance.clear();
 
-        this.build(layoutGroupTable);
+        const modelList = Util.convertGroupTable2ModelList(layoutGroupTable);
 
-        let freedList = this.getFreedConstructList(layoutGroupTable),
-            leakLayoutGroupTable = null;
+        this.build(modelList);
+
+        let freedList = this.getFreedModelList(layoutGroupTable),
+            leakModelList  = null;
         
-        if(this.leakContainer && this.prevLayoutGroupTable) {
-            leakLayoutGroupTable = this.getLeakConstructList(this.prevLayoutGroupTable, layoutGroupTable);
-            this.build(leakLayoutGroupTable);
+        if(this.leakContainer) {
+            leakModelList = this.getLeakModelList(this.prevModelList, modelList);
+            this.build(leakModelList);
         }
 
-        if(this.freedContainer) {
+        if(this.freedContainer && freedList.length) {
             EventBus.emit('onFreed', freedList);
             this.freedContainer.render(freedList);
         }
@@ -234,17 +202,19 @@ export class ViewManager {
         // 进行布局（设置model的x，y）
         this.layouter.layoutAll(this.mainContainer, layoutGroupTable);
 
-        const modelList: Model[] = Util.convertGroupTable2ModelList(layoutGroupTable);
         this.mainContainer.render(modelList);
 
-        if(this.leakContainer && this.prevLayoutGroupTable) {
+        if(this.leakContainer) {
             this.mainContainer.afterRemoveModels(() => {
-                EventBus.emit('onLeak', leakLayoutGroupTable);
-                this.leakContainer.render(Util.convertGroupTable2ModelList(leakLayoutGroupTable));
+                this.leakContainer.render(leakModelList);
+
+                if(leakModelList.length) {
+                    EventBus.emit('onLeak', leakModelList);
+                }
             });
         }
 
-        this.prevLayoutGroupTable = layoutGroupTable;
+        this.prevModelList = modelList;
     }   
 
     /**

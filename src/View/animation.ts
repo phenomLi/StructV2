@@ -87,21 +87,16 @@ export const Animations = {
      * @param model 
      * @param animationConfig 
      */
-    animate_moveTo(model: Model, animationConfig: animationConfig) {
+    animate_fadeOut(model: Model, animationConfig: animationConfig) {
         const G6Item = model.G6Item,
               group = G6Item.getContainer(),
-              Mat3 = SV.Mat3,
-              target = animationConfig.payload,
               animateCfg = {
-                  duration: animationConfig.duration,
+                  duration: 1200,
                   easing: animationConfig.timingFunction,
                   callback: animationConfig.callback
               };
-              
-        let matrix = Mat3.clone(group.getMatrix());
 
-        Mat3.translate(matrix, matrix, [target.x, target.y]);
-        group.animate({ opacity: 0, matrix }, animateCfg);
+        group.animate({ opacity: 0 }, animateCfg);
     }
     
 };
