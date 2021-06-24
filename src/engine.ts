@@ -1,6 +1,6 @@
 import { Element, Link, Pointer } from "./Model/modelData";
 import { Sources } from "./sources";
-import { ModelConstructor } from "./Model/modelConstructor";
+import { LayoutGroupTable, ModelConstructor } from "./Model/modelConstructor";
 import { AnimationOptions, EngineOptions, InteractionOptions, LayoutGroupOptions, ViewOptions } from "./options";
 import { ViewManager } from "./View/viewManager";
 import { SV } from "./StructV";
@@ -11,6 +11,7 @@ export class Engine {
     private modelConstructor: ModelConstructor = null;
     private viewManager: ViewManager
     private prevStringSourceData: string;
+    private layoutGroupTable: LayoutGroupTable;
     
     public engineOptions: EngineOptions;
     public viewOptions: ViewOptions;
@@ -81,10 +82,10 @@ export class Engine {
         this.prevStringSourceData = stringSourceData;
 
         // 1 转换模型（data => model）
-        const layoutGroupTable = this.modelConstructor.construct(sourceData);
+        this.layoutGroupTable = this.modelConstructor.construct(sourceData);
         
         // 2 渲染（使用g6进行渲染）
-        this.viewManager.renderAll(layoutGroupTable);
+        this.viewManager.renderAll(this.layoutGroupTable);
     }
 
     /**
@@ -173,6 +174,29 @@ export class Engine {
         })
 
         return links;
+    }
+
+    /**
+     * 隐藏某些组
+     * @param groupNames 
+     */
+    public hideGroups(groupNames: string | string[]) {
+        const names = Array.isArray(groupNames)? groupNames: [groupNames],
+              instance = this.viewManager.getG6Instance();
+
+        this.layoutGroupTable.forEach(item => {
+            const hasName = names.find(name => name === item.layouterName);
+
+            if(hasName && !item.isHide) {
+                item.modelList.forEach(model => instance.hideItem(model.G6Item));
+                item.isHide = true;
+            }
+
+            if(!hasName && item.isHide) {
+                item.modelList.forEach(model => instance.showItem(model.G6Item));
+                item.isHide = false;
+            }
+        });
     }
 
     /**

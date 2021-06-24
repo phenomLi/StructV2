@@ -102,30 +102,37 @@ export class ViewManager {
         const leakModelList: Model[] = prevModelList.filter(item => !modelList.find(n => n.id === item.id)),
               elements: Element[] = <Element[]>leakModelList.filter(item => item instanceof Element && item.freed === false),
               links: Link[] = <Link[]>leakModelList.filter(item => item instanceof Link),
-              elementIds: string[] = [];
+              elementIds: string[] = [],
+              res: Model[] = [];
 
-            elements.forEach(item => {
-                elementIds.push(item.id);
-                item.set('style', {
-                    fill: '#ccc'
-                });
+        elements.forEach(item => {
+            elementIds.push(item.id);
+            item.set('style', {
+                fill: '#ccc'
+            });
+        });
+
+        for(let i = 0; i < links.length; i++) {
+            let sourceId = links[i].element.id,
+                targetId = links[i].target.id;
+
+            links[i].set('style', {
+                stroke: '#333'
             });
 
-            for(let i = 0; i < links.length; i++) {
-                let sourceId = links[i].element.id,
-                    targetId = links[i].target.id;
-
-                links[i].set('style', {
-                    stroke: '#333'
-                });
-
-                if(elementIds.find(item => item === sourceId) === undefined || elementIds.find(item => item === targetId) === undefined) {
-                    links.splice(i, 1);
-                    i--;
-                }
+            if(elementIds.find(item => item === sourceId) === undefined || elementIds.find(item => item === targetId) === undefined) {
+                links.splice(i, 1);
+                i--;
             }
+        }
 
-        return [...elements, ...links];
+        res.push(...elements, ...links);
+
+        res.map(item => {
+            item.isLeak = true;
+        });
+
+        return res;
     }
 
     // ----------------------------------------------------------------------------------------------
@@ -206,12 +213,14 @@ export class ViewManager {
 
         if(this.leakContainer) {
             this.mainContainer.afterRemoveModels(() => {
-                this.leakContainer.render(leakModelList);
+                
+            });
+
+            this.leakContainer.render(leakModelList);
 
                 if(leakModelList.length) {
                     EventBus.emit('onLeak', leakModelList);
                 }
-            });
         }
 
         this.prevModelList = modelList;

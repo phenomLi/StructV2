@@ -11,8 +11,10 @@ export type LayoutGroup = {
     link: Link[];
     pointer: Pointer[];
     layouter: Layouter;
+    layouterName: string;
     options: LayoutGroupOptions;
     modelList: Model[];
+    isHide: boolean;
 };
 
 
@@ -70,7 +72,9 @@ export class ModelConstructor {
                 pointer: pointerList,
                 options: options,
                 layouter: layouter,
-                modelList: [...elementList, ...pointerList]
+                modelList: [...elementList, ...pointerList],
+                layouterName,
+                isHide: false
             });
         });
         

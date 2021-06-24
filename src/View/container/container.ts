@@ -1,6 +1,6 @@
 import { Engine } from "../../engine";
 import { Model, Pointer } from "../../Model/modelData";
-import { AnimationOptions, InteractionOptions, LayoutGroupOptions, LayoutOptions } from "../../options";
+import { AnimationOptions, InteractionOptions, LayoutGroupOptions } from "../../options";
 import { SV } from "../../StructV";
 import { Animations } from "../animation";
 import { g6Behavior, Renderer } from "../renderer";
@@ -138,9 +138,11 @@ export class Container {
                 duration: this.animationsOptions.duration,
                 timingFunction: this.animationsOptions.timingFunction,
                 callback: () => {
-                    this.renderer.removeModel(item);
-                    item.renderG6Item = item.G6Item = null;
-    
+                    if(item.isLeak === false) {
+                        this.renderer.removeModel(item);
+                        item.renderG6Item = item.G6Item = null;
+                    }
+                    
                     counter++;
     
                     if(counter === removeModels.length) {

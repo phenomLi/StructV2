@@ -42,6 +42,7 @@ export interface G6EdgeModel {
 export class Model {
     id: string;
     type: string;
+    isLeak: boolean;
     
     props: G6NodeModel | G6EdgeModel;
     shadowG6Item;
@@ -55,6 +56,7 @@ export class Model {
         this.renderG6Item = null;
         this.G6Item = null;
         this.props = <G6NodeModel | G6EdgeModel>{ };
+        this.isLeak = false;
     }
 
     /**
