@@ -45,21 +45,34 @@ export class Layouter {
                 targetBound: BoundingRect = target.getBound(),
                 anchorPosition = item.target.G6Item.getAnchorPoints()[anchor],
                 center: [number, number] = [targetBound.x + targetBound.width / 2, targetBound.y + targetBound.height / 2],
-                pointerPosition: [number, number];
+                pointerPosition: [number, number],
+                pointerEndPosition: [number, number];
 
             anchorPosition = [anchorPosition.x, anchorPosition.y];
 
             let anchorVector = Vector.subtract(anchorPosition, center),
-                angle = anchorVector[0] === 0? 0: (Math.PI / 2 - Math.atan(anchorVector[1] / anchorVector[0])),
+                angle = 0,
                 len = Vector.length(anchorVector) + offset;
+
+            if(anchorVector[0] === 0) {
+                angle = anchorVector[1] > 0? -Math.PI: 0;
+            }
+            else {
+                angle = Math.sign(anchorVector[0]) * (Math.PI / 2 - Math.atan(anchorVector[1] / anchorVector[0]));
+            }
+
+            const pointerHeight = item.get('size')[1];
 
             anchorVector = Vector.normalize(anchorVector);
             pointerPosition = Vector.location(center, anchorVector, len);
+            pointerEndPosition = Vector.location(center, anchorVector, pointerHeight + len);
+            pointerEndPosition = Vector.subtract(pointerEndPosition, pointerPosition);
 
             item.set({
                 x: pointerPosition[0],
                 y: pointerPosition[1],
-                rotation: Math.sign(anchorVector[0]) * angle
+                rotation: angle,
+                pointerEndPosition
             });
         });
     }   
@@ -171,9 +184,9 @@ export class Layouter {
             });
         });
 
-        const modelGroupList: Group[] = this.layoutModels(layoutGroupTable),
-              wrapperGroup: Group = this.layoutGroups(container, modelGroupList);
+        const modelGroupList: Group[] = this.layoutModels(layoutGroupTable);
 
+        const wrapperGroup: Group = this.layoutGroups(container, modelGroupList);
         this.fitCenter(container, wrapperGroup);
 
         layoutGroupTable.forEach(item => {

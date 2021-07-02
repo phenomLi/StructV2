@@ -189,7 +189,6 @@ export class ModelConstructor {
             pointerNames = Object.keys(pointerOptions);
 
         pointerNames.forEach(name => {
-            
             for(let i = 0; i < elements.length; i++) {
                 let element = elements[i],
                     pointerData = element[name];

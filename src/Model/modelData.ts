@@ -106,10 +106,6 @@ export class Model {
             return;
         }
 
-        if(this.props[attr] === undefined) {
-            return;
-        }
-
         if(this.props[attr] === value) {
             return;
         }
@@ -129,7 +125,8 @@ export class Model {
             const matrix = Util.calcRotateMatrix(this.getMatrix(), value);
             this.set('style', { matrix });
         }
-        else if(attr === 'x' || attr === 'y') {
+        
+        if(attr === 'x' || attr === 'y') {
             this.G6Item.updatePosition({
                 [attr]: value
             });
@@ -202,7 +199,7 @@ export class Element extends Model {
             y: 0,
             rotation: option.rotation || 0,
             type: option.type,
-            size: option.size,
+            size: option.size || [60, 30],
             anchorPoints: option.anchorPoints,
             label: option.label,
             style: Util.objectClone<Style>(option.style),
@@ -280,7 +277,7 @@ export class Pointer extends Model {
             y: 0,
             rotation: 0,
             type: option.type || 'external-pointer',
-            size: option.size,
+            size: option.size || [8, 45],
             anchorPoints: option.anchorPoints,
             label: typeof this.label === 'string'? this.label: this.label.join(', '),
             style: Util.objectClone<Style>(option.style),

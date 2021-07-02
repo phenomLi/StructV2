@@ -3,8 +3,6 @@ import * as G6 from "./../Lib/g6.js";
 
 export default G6.registerNode('external-pointer', {
     draw(cfg, group) {
-        cfg.size = cfg.size || [8, 35];
-
         const keyShape = group.addShape('path', {
             attrs: {
                 path: this.getPath(cfg),
@@ -16,18 +14,34 @@ export default G6.registerNode('external-pointer', {
 
         if (cfg.label) {
             const style = (cfg.labelCfg && cfg.labelCfg.style) || {};
-            group.addShape('text', {
+            const text = group.addShape('text', {
                 attrs: {
-                    x: cfg.size[0] + 2, // 居中
-                    y: -cfg.size[1],
+                    x: 0, 
+                    y: 0,
                     textAlign: 'left',
                     textBaseline: 'middle',
                     text: cfg.label,
                     fill: style.fill || '#000',
-                    fontSize: style.fontSize || 16
+                    fontSize: style.fontSize || 16,
+                    stroke: '#fff',
+                    lineWidth: 6
                 },
                 name: 'pointer-text-shape'
             });
+
+            const { width: textWidth } = text.getBBox();
+
+            // 旋转文字
+            const pointerEndPosition = cfg.pointerEndPosition;
+            if(pointerEndPosition) {
+                let textX = pointerEndPosition[0] - textWidth / 2,
+                    textY = pointerEndPosition[1];
+
+                text.attr({ 
+                    x: textX,
+                    y: textY
+                });
+            }
         }
 
         return keyShape;
@@ -51,5 +65,5 @@ export default G6.registerNode('external-pointer', {
         ];
 
         return path;
-    },
+    }
 });

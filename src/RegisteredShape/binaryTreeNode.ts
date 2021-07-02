@@ -3,7 +3,7 @@ import * as G6 from "./../Lib/g6.js";
 
 export default G6.registerNode('binary-tree-node', {
     draw(cfg, group) {
-        cfg.size = cfg.size || [60, 30];
+        cfg.size = cfg.size;
 
         const width = cfg.size[0],
               height = cfg.size[1];
