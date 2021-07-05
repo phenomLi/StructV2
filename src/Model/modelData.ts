@@ -169,6 +169,7 @@ export class Element extends Model {
     groupName: string;
     layouterName: string;
     freed: boolean;
+    pointers: { [key: string]: Pointer };
 
     constructor(id: string, type: string, group: string, layouter: string, sourceElement: SourceElement) {
         super(id, type);
@@ -189,6 +190,11 @@ export class Element extends Model {
 
         this.sourceId = this.id.split('.')[1];
         this.sourceElement = sourceElement;
+        this.pointers = { };
+    }
+
+    getPointer(pointerType: string): Pointer {
+        return this.pointers[pointerType] || null;
     }
 
     protected defineProps(option: ElementOption): G6NodeModel {
@@ -261,6 +267,7 @@ export class Link extends Model {
 export class Pointer extends Model {
     target: Element;
     label: string | string[];
+    anchor: number;
 
     constructor(id: string, type: string, label: string | string[], target: Element) {
         super(id, type);
@@ -268,17 +275,24 @@ export class Pointer extends Model {
         this.label = label;
 
         this.target.set('externalPointerId', id);
+        this.target.pointers[type] = this;
     }
 
-    protected defineProps(option: ElementOption): G6NodeModel {
+    setAnchor(anchor: number) {
+        this.anchor = anchor;
+    };
+
+    protected defineProps(option: PointerOption): G6NodeModel {
+        this.setAnchor(option.anchor);
+
         return {
             id: this.id,
             x: 0,
             y: 0,
             rotation: 0,
             type: option.type || 'external-pointer',
-            size: option.size || [8, 45],
-            anchorPoints: option.anchorPoints,
+            size: option.size || [8, 50],
+            anchorPoints: null,
             label: typeof this.label === 'string'? this.label: this.label.join(', '),
             style: Util.objectClone<Style>(option.style),
             labelCfg: Util.objectClone<ElementLabelOption>(option.labelOptions),

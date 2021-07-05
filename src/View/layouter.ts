@@ -39,7 +39,7 @@ export class Layouter {
         pointers.forEach(item => {
             const options: PointerOption = pointerOptions[item.getType()],
                   offset = options.offset || 8,
-                  anchor = options.anchor || 0;
+                  anchor = item.anchor || 0;
 
             let target = item.target,
                 targetBound: BoundingRect = target.getBound(),
@@ -102,7 +102,7 @@ export class Layouter {
     private layoutModels(layoutGroupTable: LayoutGroupTable): Group[] {
         const modelGroupList: Group[] = [];
 
-        layoutGroupTable.forEach((group, groupName) => {
+        layoutGroupTable.forEach(group => {
             const options: LayoutOptions = group.options.layout,
                   modelList: Model[] = group.modelList,
                   modelGroup: Group = new Group();
@@ -111,12 +111,13 @@ export class Layouter {
                 modelGroup.add(item);
             });
             
-            
             this.initLayoutValue(group.element, group.pointer); // 初始化布局参数
             group.layouter.layout(group.element, options);  // 布局节点
-            this.layoutPointer(group.pointer, group.options.pointer);  // 布局外部指针
-
             modelGroupList.push(modelGroup);
+        });
+
+        layoutGroupTable.forEach(group => {
+            this.layoutPointer(group.pointer, group.options.pointer);  // 布局外部指针
         });
 
         return modelGroupList;
