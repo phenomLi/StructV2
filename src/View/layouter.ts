@@ -51,8 +51,7 @@ export class Layouter {
             anchorPosition = [anchorPosition.x, anchorPosition.y];
 
             let anchorVector = Vector.subtract(anchorPosition, center),
-                angle = 0,
-                len = Vector.length(anchorVector) + offset;
+                angle = 0, len = Vector.length(anchorVector) + offset;
 
             if(anchorVector[0] === 0) {
                 angle = anchorVector[1] > 0? -Math.PI: 0;

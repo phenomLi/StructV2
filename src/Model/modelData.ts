@@ -193,10 +193,6 @@ export class Element extends Model {
         this.pointers = { };
     }
 
-    getPointer(pointerType: string): Pointer {
-        return this.pointers[pointerType] || null;
-    }
-
     protected defineProps(option: ElementOption): G6NodeModel {
         return {
             ...this.sourceElement,
@@ -278,12 +274,8 @@ export class Pointer extends Model {
         this.target.pointers[type] = this;
     }
 
-    setAnchor(anchor: number) {
-        this.anchor = anchor;
-    };
-
     protected defineProps(option: PointerOption): G6NodeModel {
-        this.setAnchor(option.anchor);
+        this.anchor = option.anchor;
 
         return {
             id: this.id,

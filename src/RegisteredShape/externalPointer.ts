@@ -14,6 +14,18 @@ export default G6.registerNode('external-pointer', {
 
         if (cfg.label) {
             const style = (cfg.labelCfg && cfg.labelCfg.style) || {};
+
+            const bgRect = group.addShape('rect', {
+                attrs: {
+                    x: 0, 
+                    y: 0,
+                    text: cfg.label,
+                    fill: style.fill || '#fafafa',
+                    radius: 2
+                },
+                name: 'bgRect'
+            });
+
             const text = group.addShape('text', {
                 attrs: {
                     x: 0, 
@@ -21,25 +33,34 @@ export default G6.registerNode('external-pointer', {
                     textAlign: 'left',
                     textBaseline: 'middle',
                     text: cfg.label,
-                    fill: style.fill || '#000',
-                    fontSize: style.fontSize || 16,
-                    stroke: '#fff',
-                    lineWidth: 6
+                    fill: style.fill || '#999',
+                    fontSize: style.fontSize || 16
                 },
                 name: 'pointer-text-shape'
             });
 
-            const { width: textWidth } = text.getBBox();
+            const { width: textWidth, height: textHeight } = text.getBBox();
+            bgRect.attr({ 
+                width: textWidth + 6,
+                height: textHeight + 6
+            });
 
             // 旋转文字
             const pointerEndPosition = cfg.pointerEndPosition;
             if(pointerEndPosition) {
                 let textX = pointerEndPosition[0] - textWidth / 2,
-                    textY = pointerEndPosition[1];
+                    textY = pointerEndPosition[1],
+                    rectWidth = bgRect.attr('width'),
+                    rectHeight = bgRect.attr('height');
 
                 text.attr({ 
                     x: textX,
                     y: textY
+                });
+
+                bgRect.attr({ 
+                    x: pointerEndPosition[0] - rectWidth / 2,
+                    y: pointerEndPosition[1] - rectHeight / 2
                 });
             }
         }

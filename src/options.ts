@@ -117,7 +117,7 @@ export interface EngineOptions {
 
 export interface Layouter {
     defineOptions(): LayoutGroupOptions;
-    sourcesPreprocess?(sources: SourceElement[]): SourceElement[];
+    sourcesPreprocess?(sources: SourceElement[], options: LayoutGroupOptions): SourceElement[];
     defineLeakRule?(elements: Element[]): Element[];
     layout(elements: Element[], layoutOptions: LayoutOptions);
     [key: string]: any;

@@ -59,7 +59,7 @@ export class ModelConstructor {
             }
         
             const options: LayoutGroupOptions = optionsTable[layouterName],
-                  sourceData = layouter.sourcesPreprocess(sourceGroup.data),
+                  sourceData = layouter.sourcesPreprocess(sourceGroup.data, options),
                   elementOptions = options.element || { },
                   pointerOptions = options.pointer || { };
                 
